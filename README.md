@@ -6,7 +6,6 @@ El contenido principal del proyecto puede consultarse en el repositorio de GitHu
 
 ## Información del trabajo
 
-- **Título:** WebBuilder: generación automática de sitios web Django con apoyo de LLM
 - **Autor/a:** Alejandro Tejero
 - **Titulación:** Ingeniería Telematica
 - **Universidad:** URJC
