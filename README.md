@@ -7,8 +7,8 @@ El contenido principal del proyecto puede consultarse en el repositorio de GitHu
 ## Información del trabajo
 
 - **Título:** WebBuilder: generación automática de sitios web Django con apoyo de LLM
-- **Autor/a:** [Tu nombre y apellidos]
-- **Titulación:** [Tu grado]
-- **Universidad:** [Tu universidad]
+- **Autor/a:** Alejandro Tejero
+- **Titulación:** Ingeniería Telematica
+- **Universidad:** URJC
 - **Curso académico:** 2025/2026
-- **Tutor/a:** [Nombre del tutor o tutora]
+- **Tutor/a:** David Moreno Lumbreras
