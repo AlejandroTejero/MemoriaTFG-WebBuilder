@@ -198,6 +198,7 @@ As it is the translation of the ``Resumen'', which is supposed to be written at 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INTRODUCCIÓN %
+% Explicar el contexto del proyecto: pq lo has hecho, cual es la motivacion, q esperas conseguir % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \cleardoublepage
@@ -329,6 +330,7 @@ Así:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OBJETIVOS %
+% Frase q cuentas para explicar de q va el tfg % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \cleardoublepage % empezamos en página impar
@@ -351,7 +353,7 @@ Los objetivos específicos se pueden entender como las tareas en las que se ha d
 Y, sí, también vienen en infinitivo.
 
 
-\section{Planificación temporal}
+\section{Planificación temporal} %Como se ha ido llevando el proyecto %
 \label{sec:planificacion-temporal}
 
 A mí me gusta que aquí pongáis una descripción de lo que os ha llevado realizar el trabajo.
@@ -362,6 +364,7 @@ Lo importante es que quede claro cuánto tiempo llevas (tiempo natural, p.ej., 6
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ESTADO DEL ARTE %
+% Tecnmolofgias q usas para el TFG (todo lo q no has hecho tu : Lenmguajes de programacion, herramientas, bibliotecas etc)%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \cleardoublepage
@@ -441,25 +444,80 @@ Puedes probarlo en \url{https://www.tablesgenerator.com/}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISEÑO E IMPLEMENTACIÓN %
+% Descripcion a full de nuestro trabajo , hay q ser muy detallista, todo lo q hemos hecho %
+% Tiene q quedar muy claro como lo hemos hecho % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \cleardoublepage
 \chapter{Diseño e implementación}
 \label{sec:diseno}
 
-Aquí viene todo lo que has hecho tú (tecnológicamente). 
-Puedes entrar hasta el detalle. 
-Es la parte más importante de la memoria, porque describe lo que has hecho tú.
-Eso sí, normalmente aconsejo no poner código, sino diagramas.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Aquí viene todo lo que has hecho tú (tecnológicamente). 
+% Puedes entrar hasta el detalle. 
+% Es la parte más importante de la memoria, porque describe lo que has hecho tú.
+% Eso sí, normalmente aconsejo no poner código, sino diagramas.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Indice de Diseño e Implementacion
+% 4.1 - Arquitectura general
+% 4.2 - Ingestion de datos (+)
+% 4.3 - Analisis estructural del dataset (+)
+% 4.4 - Integración del LLM (+)
+% 4.5 - Generación del proyecto Django (+)
+% 4.6 - Interfaz y flujo del usuario (+)
+% 4.7 - Automatizaciones con n8m (+)
+% 4.8 - Panel de adminisitracion y métricas (+)
+% 4.9 - Base de datos (+)
+% 4.10 - Seguridad (+)
+% 4.11 - Internacionalización
 
-
-\section{Arquitectura general} 
+% 4.1 - Arquitectura general
+\section{Arquitectura general}
 \label{sec:arquitectura}
+% Si tu proyecto es un software, siempre es bueno poner la arquitectura (que es cómo se estructura tu programa a ``vista de pájaro'').
 
-Si tu proyecto es un software, siempre es bueno poner la arquitectura (que es cómo se estructura tu programa a ``vista de pájaro'').
+WebBuilder es una aplicación web construida en Python sobre el framework Django. 
+Esta aplicación orquesta tres componentes esenciales para su correcto funcionamiento:
 
-\begin{figure}
+\begin{itemize}
+    \item La propia aplicación Django, encargada de la lógica y de la interfaz del usuario.
+    \item El servidor n8n, que actúa como motor de automatización de flujos.
+    \item Docker, encargado de construir y ejecutar los proyectos generados.
+\end{itemize}
+
+Estos tres componentes corren de forma independiente, pero se comunican entre sí 
+constantemente mediante llamadas HTTP y una carpeta compartida en disco, consiguiendo 
+así el correcto funcionamiento de la aplicación de forma sencilla y automatizada.
+
+El flujo comienza cuando el usuario se registra en la plataforma. Una vez dentro, 
+debe introducir la URL de su API pública o el fichero descargado con el contenido 
+de la base de datos. El sistema soporta los formatos JSON, XML, CSV y GeoJSON. 
+Además, el usuario debe escribir un prompt explicando qué tipo de página quiere: 
+estructura, colores, diseño, etc. Para facilitar esto, existe también una guía de 
+prompt mediante botones, donde el usuario puede seleccionar sus preferencias de 
+forma más visual.
+
+Una vez introducidos la URL o fichero y el prompt, el LLM analiza el contenido de 
+la base de datos y propone un mapeo con la estructura de la página. Este mapeo 
+incluye el tipo de página más adecuado al contenido (catálogo, blog, tienda, 
+dashboard u otro), el título de la página, y los campos de la base de datos que 
+el LLM considera más relevantes con sus nombres asignados. Todos estos campos son 
+modificables por el usuario antes de continuar.
+
+Si el tipo de página seleccionado no es un catálogo, el usuario tiene la opción de 
+generar usuarios predeterminados para su página, tanto superusuarios como usuarios 
+normales, de forma que sus cuentas ya estén registradas cuando la página se despliegue.
+
+Una vez completada esta configuración, comienza la generación del proyecto. Al 
+finalizar, se muestra una página con las métricas de la generación: número de 
+llamadas al LLM, ficheros generados, páginas y URLs internas, entre otros datos. 
+Desde esta misma página el usuario puede desplegar el proyecto en un contenedor 
+local para previsualizarlo, descargar el ZIP con todos los ficheros, o editar el 
+código directamente mediante el editor integrado.
+
+
+\begin{figure}[H]
   \centering
   \includegraphics[width=9cm, keepaspectratio]{img/arquitectura.png}
   \caption{Estructura del parser básico}
@@ -467,25 +525,176 @@ Si tu proyecto es un software, siempre es bueno poner la arquitectura (que es c�
 \end{figure}
 
 
-Por ejemplo, puedes verlo en la figura~\ref{fig:arquitectura}.
-\LaTeX \ pone las figuras donde mejor cuadran. 
-Y eso quiere decir que quizás no lo haga donde lo hemos puesto\ldots 
-Eso no es malo.
-A veces queda un poco raro, pero es la filosofía de \LaTeX: tú al contenido, que yo me encargo de la maquetación.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Por ejemplo, puedes verlo en la figura~\ref{fig:arquitectura}.
+% \LaTeX \ pone las figuras donde mejor cuadran. 
+% Y eso quiere decir que quizás no lo haga donde lo hemos puesto\ldots 
+% Eso no es malo.
+% A veces queda un poco raro, pero es la filosofía de \LaTeX: tú al contenido, que yo me encargo de la maquetación.
+
+% Recuerda que toda figura que añadas a tu memoria debe ser explicada.
+% Sí, aunque te parezca evidente lo que se ve en la figura~\ref{fig:arquitectura}, la figura en sí solamente es un apoyo a tu texto.
+% Así que explica lo que se ve en la figura, haciendo referencia a la misma tal y como ves aquí.
+% Por ejemplo: En la figura~\ref{fig:arquitectura} se puede ver que la estructura del \emph{parser} básico, que consta de seis componentes diferentes: los datos se obtienen de la red, y según el tipo de dato, se pasará a un \emph{parser} específico y bla, bla, bla\ldots
+
+% Si utilizas una base de datos, no te olvides de incluir también un diagrama de entidad-relación. IMPORTANTE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 4.2 - Ingestión de datos (toda la ingesta y parseo antes de la IA)
+\section{Ingestión de datos}
+\label{sec:ingestion-datos}
+El módulo de ingestión de datos es la primera fase del pipeline. 
+Se encuentra en la carpeta \texttt{utils/ingest/} y tiene dos funciones principales: la obtención segura de los datos y, posteriormente, el parseo de los mismos.
+
+Está compuesto por los siguientes módulos:
+
+\begin{itemize}
+    \item \texttt{utils/ingest/url\_reader.py}: Descarga desde URL.
+    \item \texttt{utils/ingest/parsers.py}: Detección de formato y parseo.
+\end{itemize}
+
+% 4.2.1 Entrada de datos
+\subsection{Entrada de datos}
+\label{subsec:entrada-datos}
+WebBuilder acepta dos fuentes de entrada:
+
+\begin{itemize}
+    \item \textbf{URL de API pública}: el usuario introduce una URL y  WebBuilder realiza una petición HTTP GET para descargar el contenido.
+    \item \textbf{Fichero subido}: el usuario sube un fichero desde su máquina local. Esta opción es útil cuando la API es privada, requiere autenticación o el usuario ya tiene los datos descargados.
+\end{itemize}
+
+Ambos caminos acaban en la misma lógica de parseo, por lo que desde el punto de vista del resto del sistema son equivalentes: en ambos casos se produce una tupla \texttt{(texto\_crudo, resumen)} que alimenta la fase de parseo.
+
+% 4.2.2 Validación y descarga segura
+\subsection{Validación y descarga segura}
+\label{subsec:validacion-descarga}
+Dado que la entrada de datos proviene de fuentes externas no controladas, es imprescindible aplicar medidas de seguridad que eviten ataques o caídas del servidor. La función \texttt{validate\_url} del módulo 
+\texttt{url\_reader} aplica los siguientes controles:
+
+\begin{itemize}
+    \item El esquema de la URL debe ser \texttt{http} o \texttt{https}. 
+    No se permite \texttt{ftp}, \texttt{file}, \texttt{data} u otros 
+    protocolos.
+    \item La URL debe tener un dominio válido (\texttt{netloc} no vacío).
+    \item La longitud total de la URL no puede superar los 2048 caracteres.
+\end{itemize}
+
+Tras validar, la descarga se realiza con la librería \texttt{requests} 
+aplicando los siguientes parámetros de seguridad:
+
+\begin{itemize}
+    \item \textbf{Timeout} de 8 segundos por defecto: si el servidor 
+    remoto no responde en ese tiempo, se aborta la petición y se lanza 
+    un error controlado.
+    \item \textbf{Cabecera} \texttt{User-Agent}: ``WebBuilder/1.0''.
+    \item \textbf{Descarga en streaming} por \emph{chunks} de 8192 bytes.
+    \item \textbf{Límite de 1\,MB} (\texttt{MAX\_BYTES = 1\_000\_000}) 
+    en la descarga total. Si el servidor anuncia un \texttt{Content-Length} 
+    mayor en la respuesta, se aborta antes de descargar. Si no lo anuncia, 
+    se va acumulando por \emph{chunks} y se corta en cuanto se supera el 
+    límite.
+\end{itemize}
+
+La función \texttt{fetch\_url} captura las excepciones típicas 
+(\texttt{Timeout}, \texttt{ConnectionError}, \texttt{HTTPError}) y las 
+convierte en \texttt{ValueError} con mensajes legibles para el usuario, 
+en lugar de propagar trazas internas.
 
 
- 
-Recuerda que toda figura que añadas a tu memoria debe ser explicada.
-Sí, aunque te parezca evidente lo que se ve en la figura~\ref{fig:arquitectura}, la figura en sí solamente es un apoyo a tu texto.
-Así que explica lo que se ve en la figura, haciendo referencia a la misma tal y como ves aquí.
-Por ejemplo: En la figura~\ref{fig:arquitectura} se puede ver que la estructura del \emph{parser} básico, que consta de seis componentes diferentes: los datos se obtienen de la red, y según el tipo de dato, se pasará a un \emph{parser} específico y bla, bla, bla\ldots
+% 4.2.3 Detección automática de formato
+\subsection{Detección automática de formato}
+\label{subsec:deteccion-automatica}
+Uno de los requisitos del proyecto es que el usuario no tenga que indicar 
+el formato del dataset. El sistema detecta automáticamente entre cuatro 
+formatos soportados mediante la función \texttt{detect\_format} de 
+\texttt{parsers.py}:
 
-Si utilizas una base de datos, no te olvides de incluir también un diagrama de entidad-relación.
+\begin{itemize}
+    \item \textbf{JSON}: el texto crudo, tras eliminar espacios en blanco 
+    iniciales, empieza por \texttt{\{} o \texttt{[}.
+    \item \textbf{GeoJSON}: además de cumplir la condición de JSON, su raíz 
+    es un objeto con el campo \texttt{type} igual a \texttt{FeatureCollection}. 
+    Para detectarlo se parsean solo los primeros 500 caracteres del texto, 
+    para no procesar todo el dataset en la fase de detección.
+    \item \textbf{XML}: el texto crudo empieza por \texttt{<}.
+    \item \textbf{CSV}: ninguno de los anteriores, pero la primera línea 
+    contiene comas o puntos y coma.
+\end{itemize}
+
+Si ninguno de estos patrones se cumple, se devuelve \texttt{unknown} y el 
+parseo falla con un error controlado indicando los formatos soportados.
+
+
+% 4.2.4 Parseo seguro
+\subsection{Parseo seguro}
+\label{subsec:parseo-seguro}
+La función \texttt{parse\_raw} transforma el texto crudo en una estructura 
+Python (\texttt{dict} o \texttt{list}) homogénea, independientemente del 
+formato original. El objetivo es que, a partir de este punto, el resto 
+del pipeline trabaje siempre con estructuras Python nativas sin tener que 
+saber el formato de origen.
+
+\paragraph{Parseo JSON.} Se usa \texttt{json.loads} de la librería estándar. 
+No requiere precauciones adicionales porque \texttt{json.loads} no ejecuta 
+código arbitrario.
+
+\paragraph{Parseo XML.} Se utiliza la librería \texttt{defusedxml} 
+(\texttt{ElementTree}) para validar que el XML no contiene entidades 
+maliciosas (ataques XXE, expansión exponencial, referencias recursivas). 
+Una vez validado, se convierte a \texttt{dict} con \texttt{xmltodict.parse} 
+para tener el mismo tipo de estructura que el JSON.
+
+\paragraph{Parseo CSV.} Se emplea \texttt{csv.Sniffer} sobre los primeros 
+2000 caracteres para detectar automáticamente el delimitador (coma o punto 
+y coma). Si \texttt{Sniffer} falla, se recurre al dialecto estándar 
+\texttt{csv.excel}. Luego se usa \texttt{csv.DictReader} para convertir 
+cada fila en un \texttt{dict} cuyas claves son los encabezados. Se limita 
+el parseo a las primeras 2000 filas para no saturar memoria.
+
+\paragraph{Parseo GeoJSON.} Se aprovecha que GeoJSON es un JSON con 
+estructura conocida. Se extraen las \texttt{features} (lista de ítems 
+geográficos) y de cada una se toman sus \texttt{properties} (atributos 
+no geométricos). Como información adicional se añade el campo 
+\texttt{\_geometry\_type}, que puede resultar útil más adelante. El 
+resultado es una \texttt{list[dict]}, el mismo formato que los otros 
+parseadores.
+
+El resultado de esta fase es siempre una tupla \texttt{(formato\_detectado, 
+estructura)}. La estructura puede ser un \texttt{dict}, una \texttt{list} 
+o una \texttt{list[dict]}, dependiendo de la forma del dataset original.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 4.3 - Análisis estructural del dataset - Mi analisis propio, sin LLM.
+\section{Análisis estructural del dataset}
+\label{sec:analisis-estructural}
+
+
+% 4.3.1 Detección de la colección principal
+\subsection{Detección de la colección principal}
+\label{subsec:deteccion-coleccion}
+
+
+% 4.3.2 Extracción de claves disponibles
+\subsection{Extracción de claves}
+\label{subsec:extraccion-claves}
+
+
+% 4.3.3 Resumen del dataset
+\subsection{Resumen del dataset}
+\label{subsec:resumen-dataset}
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EXPERIMENTOS Y VALIDACIÓN %
+% Resultado del TFG - app web, manual de usuario, test, experimentos, etc%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \cleardoublepage
