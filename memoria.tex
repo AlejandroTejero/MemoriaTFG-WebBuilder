@@ -502,7 +502,7 @@ datos de la API, los analizaba y devolvía una propuesta de estructura para el f
 El unico modelo de la base de datos en esta fase era \textbf{APIRequest}, que recogia los datos de cada peticion URL realizada.
 Se encargaba de recoger los siguientes campos: Datos en crudo recogidos de la API (\texttt{raw\_data}), la estructura de datos ya parseada (\texttt{parsed\_data}),
 el estado del análisis mediante un campo de elección (\texttt{pending}, \texttt{processed} o \texttt{error}), y el mapping resultante que se mostraria al usuario
-(\texttt{field\_mapping}). Este modelo fue el eje central durante este sprint y sera la base del analisis durante todo el proyecto
+(\texttt{field\_mapping}). Este modelo fue el eje central durante esta fase y sera la base del analisis durante todo el proyecto
 
 \subsection{Ingestion de datos}
 \label{subsec:ingestion-datos}
@@ -521,7 +521,7 @@ original.
 \subsection{Deteccion de la colección principal}
 \label{subsection:deteccion-coleccion-principal}
 
-La parte mas compleja de este sprint fue entender la estructura interna de los campos de las distintas APIs. Estos campos realmente son una lista plana de items
+La parte mas compleja de esta fase fue entender la estructura interna de los campos de las distintas APIs. Estos campos realmente son una lista plana de items
 en la raiz, es decir, la colecion principal no esta expuesta, sino que esta envuelta bajo claves de metadatos como \texttt{results}, \texttt{data} o \texttt{items},
 o incluso con varios niveles de profundidad. 
 
@@ -568,7 +568,7 @@ Desde el primer commit se escribieron tests para los módulos principales: anál
 comportamiento del sistema de scoring con datasets variados, detectando casos en los que las heurísticas fallaban antes de que llegaran al usuario.
 \subsection*{Limitaciones del enfoque heurístico} \label{subsec:limitaciones1}
 
-Conforme se probaba el sistema con datasets reales muy distintos entre sí, los límites del enfoque heurístico se fueron haciendo evidentes. Una API de plantas medicinales, una de personajes de ficción y una de productos de e-commerce tienen nomenclaturas de campos completamente diferentes, y un sistema de reglas fijas no podía cubrir todos los casos con la misma fiabilidad. Cuando los nombres de los campos no coincidían con los campos de la API, el mapping era genérico y malo para el usuario. El sistema funcionaba razonablemente bien con APIs convencionales y con campos estándar, pero fallaba ante cualquier dataset con nombres o estructura poco habituales. Esta limitación fue la que motivó el cambio de enfoque descrito en el sprint siguiente.
+Conforme se probaba el sistema con datasets reales muy distintos entre sí, los límites del enfoque heurístico se fueron haciendo evidentes. Una API de plantas medicinales, una de personajes de ficción y una de productos de e-commerce tienen nomenclaturas de campos completamente diferentes, y un sistema de reglas fijas no podía cubrir todos los casos con la misma fiabilidad. Cuando los nombres de los campos no coincidían con los campos de la API, el mapping era genérico y malo para el usuario. El sistema funcionaba razonablemente bien con APIs convencionales y con campos estándar, pero fallaba ante cualquier dataset con nombres o estructura poco habituales. Esta limitación fue la que motivó el cambio de enfoque descrito en la siguiente fase.
 
 
 \section{Fase 3: Integracion LLM y n8n}
@@ -592,6 +592,214 @@ plano.
 
 Una decision impotante fue utilizar el estandar de la mayoria de proveedores para realizar la conexion, utilizando de esta forma el endpoint \textbf{/chat/completions}. En este caso creado para poder realizar pruebas con varios LLM de diferentes proovedores (OpenRouter, Groq, NVIDIA) y cualquier agente local.
 Otra decision fue crear \texttt{.env}, de forma que la URL base, la API key y el modelo se leen de variables de entorno definidas en dicho fichero, lo que permite cambiar de proveedor sin tocar una sola línea de código.
+
+La función mencionada anteriormente acepta tres parámetros principales:
+
+\begin{itemize}
+    \item \textbf{Mensaje de usuario}: la tarea concreta que se le envía al modelo 
+    en cada llamada, en este caso el prompt con los datos del dataset, las claves 
+    disponibles y los ejemplos de items reales.
+    
+    \item \textbf{Mensaje de sistema}: instrucciones previas que definen cómo debe 
+    comportarse el modelo antes de procesar el mensaje del usuario. Se utiliza para 
+    indicarle el rol que debe adoptar, el formato de respuesta esperado y lo que 
+    está prohibido hacer. Es opcional, ya que técnicamente todo puede ir en el 
+    mensaje de usuario, pero separarlo es una buena práctica que facilita reutilizar 
+    el mismo comportamiento base en distintas llamadas.
+    
+    \item \textbf{Temperatura}: parámetro que controla el grado de aleatoriedad 
+    en las respuestas del modelo. Un valor cercano a 0 produce respuestas más 
+    deterministas y predecibles, mientras que valores más altos generan respuestas 
+    más creativas pero menos consistentes. En este caso se fija por defecto en 
+    \texttt{0.2}, favoreciendo la estabilidad especialmente cuando se espera JSON 
+    estructurado como salida.
+\end{itemize}
+
+El primer proveedor utilizado fue OpenRouter con el modelo \texttt{meta-llama/llama-3.3-70b-instruct:free}, de acceso gratuito y potencio mas que suficiente para las primeras 
+pruebas.
+
+
+\subsection{Planner schema}
+\label{subsec:planner-schema}
+
+Otro fichero clave fue \textbf{}{utils/llm/planner.py} y su funcion \texttt{generate\_site\_plan}. La mision era transformar el resultado del analisis en un propuesta con campos
+concretos de schema que el usuario pudiese aceptar y modificar a su gusto antes de continuar.
+
+El schema tiene una forma fija que el resto del sistema espera:
+\begin{itemize}
+    \item \textbf{site\_type}: tipo de sitio recomendado, entre \texttt{blog}, \texttt{portfolio}, \texttt{catalog}, \texttt{dashboard} u \texttt{other}.
+    \item \textbf{site\_title}: nombre descriptivo del sitio propuesto por el modelo.
+    \item \textbf{fields}: lista ordenada de campos del dataset que el sitio debe mostrar, cada uno con su clave original y una etiqueta legible para el usuario.
+\end{itemize}
+
+Para obtener este esquema, se construye un prompt estructurado que se envía al LLM. Este prompt es el resultado de una serie de pruebas con distintas formulaciones,  
+siguiendo técnicas de \emph{prompt engineering}~\cite{openai_prompt_engineering} para conseguir respuestas consistentes y parseables. La información contenida en este 
+prompt es la siguiente:
+
+\begin{itemize}
+    \item \textbf{Objetivo del usuario}: texto en lenguaje natural introducido por 
+    el usuario describiendo qué tipo de sitio quiere construir.
+    
+    \item \textbf{Claves disponibles}: lista de campos reales extraídos del dataset 
+    durante la fase de análisis. El modelo solo puede proponer campos que estén 
+    en esta lista.
+    
+    \item \textbf{Ejemplos del dataset}: hasta tres items reales del dataset, para 
+    que el modelo pueda entender qué tipo de valores contiene cada campo y proponer 
+    etiquetas adecuadas.
+    
+    \item \textbf{Contrato JSON}: estructura exacta que debe devolver el modelo, 
+    con los campos obligatorios y su formato esperado.
+    
+    \item \textbf{Reglas de formato}: conjunto de instrucciones explícitas que 
+    indican al modelo que debe devolver únicamente un objeto JSON válido, sin 
+    bloques de código Markdown, sin texto introductorio y sin ningún contenido 
+    fuera del JSON.
+\end{itemize}
+
+Esta rigidez sobre el formato de salida, es intencionada, ya que tras la realizacion de varias pruebas los fallos generados por los diferentes LLM siempre eran parecidos.
+Como esa respuesta va a ser usada directamente, cualquier texto adicional rompe el proceso. De todas formas, debido a las alucionaciones de algunos modelos y la ignoracion 
+de las restricciones en algunas ocasiones, se aplicaba una limpieza previa que eliminaba bloques Markdown y caracteres sobrantes del parseo JSON.
+
+
+\subsection{Proteccion anti-alucinaciones}
+\label{subsec:proteccion-anti-alucionaciones}
+
+Los errores mas comunes siempre sucedian por la misma causa, las alucinaciones del LLM. El error mas comun era inventar informacion que no existia en la API, y que nunca se
+en el parseo, por lo que no existe en el dataset contruido. Para ello hubo que aplicar varias capas de defensa contra alucinaciones para proteger los schemas.
+
+\begin{itemize}
+    \item \textbf{Validación contra claves reales}: cada clave propuesta por el LLM se comprueba contra la lista de claves reales extraída del dataset. Si la clave no existe, se intenta un match sin distinguir mayúsculas y minúsculas. Si tampoco hay coincidencia, la clave se descarta silenciosamente.
+    \item \textbf{Filtro de tokens prohibidos}: existe una lista de palabras que el modelo confunde con claves del dataset porque forman parte del propio prompt, como \texttt{available_keys}, \texttt{fields} o \texttt{examples}. Cualquier clave que coincida con esta lista se descarta automáticamente.
+    \item \textbf{Detección de valores disfrazados de claves}: se detectan los casos en los que el modelo introduce un valor concreto del dataset donde debería haber puesto el nombre de un campo, como fechas en formato ISO, URLs completas o cadenas excesivamente largas.
+    \item \textbf{Fallback}: si tras aplicar todas las validaciones no queda ninguna clave válida, el sistema construye automáticamente un schema de emergencia con las primeras claves del dataset, garantizando que el flujo nunca se bloquea por un fallo del modelo.
+\end{itemize}
+
+Si el parseo falla, el sistema reintenta automáticamente una vez con una pista sobre el error cometido. Si el segundo intento también falla, se activa el fallback.
+
+
+\subsection{Actualizacion de modelos}
+\label{subsec:actualizacion-modelos}
+
+La integracion del LLM trajo consigo dos cambios importantes.
+
+El primero de ellos fue una modificacion en el modelo existente \textbf{APIRequest}, añadiendole el campo \texttt{plan\_accepted}. Siendo este un booleano encargado de guardar
+si el usuario ha aceptado el schema propuesto antes de continuar.
+
+El segundo fue la creacion de un nuevo modelo llamado \textbf{GeneratedSite}, vinculado con el modelo APIRequest mediante una relacion \texttt{OneToOne}. Este modelo se
+encargaba de guardar el plan aceptado, y los templates generados para el sitio web, y un identificador unico en el campo \texttt{UUID}. Este modelo fue muy importante para
+la generacion de los proyectos que se desarrollaria en la siguiente fase.
+
+
+\subsection{Integracion de n8n}
+\label{subsec:integracion-n8n}
+
+En paralelo a la integración del LLM, durante esta fase se incorporó n8n al sistema por primera vez. n8n es una herramienta de automatización de flujos que permite conectar servicios mediante webhooks y nodos, y que mas adelante en una pieza fundamental de la arquitectura del proyecto. En este momento su uso fue todavía inicial: instalar el entorno y conectar el crear el primer flujo de pruebas.
+
+n8n se instaló en un contenedor Docker siguiendo la imagen oficial, quedando disponible en \texttt{localhost:5678}. Una vez levantado el entorno, se creó el primer flujo en n8n y se configuró el primer webhook, apuntando a la ruta \texttt{/webhook-test/WebBuilder-Register}. El prefijo \texttt{webhook-test} indica que el webhook estaba en modo de prueba, el modo que n8n ofrece para verificar que el flujo funciona correctamente antes de activarlo en producción.
+
+La integración en Django se realizó en \texttt{views/auth.py}, donde se añadió la función \texttt{llamar\_webhook}.
+El nodo de encargaria de notificar al un nuevo usuario en base de datos, es decir, aquellos usuarios reciend registrados. Django realizaba una llamada POST a ese webhook con el nombre de usuario y el email, y n8n enviaba automáticamente un correo de bienvenida. Mas adelante se completaria el flujo con el webhook de login.
+
+La función estaba diseñada para ser completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente y el registro continuaba con normalidad. Esto garantizaba que un fallo en el sistema de notificaciones nunca pudiera bloquear el acceso a la aplicación.
+
+
+\section{Fase 4: Generador de proyectos Django}
+\label{sec:generador-proytectos}
+
+Tras la implementacion del LLM y el sistema de schema funcionando correctamente, el siguiente paso era el mas complicado del proyecto: convertir el schema aprobado por le usuario
+en un proyecto django completo, funcional y desplegable. Durante esta fase del proyecto surgio en el fichero mas importante hasta la fecha: \textbf{utils/generator/project\_generator}, el nucleo de WebBuilder.
+
+
+\subsection{Arquitectura del generador}
+\label{subsec:arquitectura-generador}
+
+El generador se organiza como un orquestador de siete pasos secuenciales, cada uno con su responsabilidad concreta y encargado de producir uno o varios ficheros del proyecto final.
+El LLM interviene en los primeros seis pasos, que se encargan de la creacion de ficheros, pero en el septimo paso ya no interviene, y se concluye la ejecuccion con el ensamblaje de todos los ficheros generados anteriormente.
+
+\begin{itemize}
+    \item \textbf{Paso 1 — Estructura de páginas}: el LLM decide qué páginas tendrá el sitio, sus URLs, sus nombres de vista y si cada página es un listado, una página de detalle o una portada. El resultado es una lista de páginas que guiará todos los pasos siguientes.
+    \item \textbf{Paso 2 — models.py}: el LLM genera el modelo de datos Django adaptado a los campos del dataset.    
+    \item \textbf{Paso 3 — views.py y urls.py}: el LLM genera las vistas necesarias para cada página decidida en el paso 1. El fichero \texttt{urls.py} se genera en Python directamente a partir de la lista de páginas, sin intervención del modelo.
+    
+    \item \textbf{Paso 4 — base.html}: el LLM genera la plantilla base del sitio, con la estructura HTML común a todas las páginas: cabecera, navegación y bloque de contenido.
+    
+    \item \textbf{Paso 5 — Templates por página}: el LLM genera un template HTML independiente para cada página, adaptado a su tipo y a los campos del dataset.
+    
+    \item \textbf{Paso 6 — load\_data.py}: el LLM genera un comando de gestión de Django que, al ejecutarse, descarga los datos de la API original y los inserta en la base de datos del sitio generado. Este fichero es fundamental para que el sitio tenga contenido real desde el primer arranque.
+    
+    \item \textbf{Paso 7 — Archivos fijos}: se ensamblan todos los ficheros de infraestructura que no dependen del dataset ni del LLM: \texttt{settings.py}, \texttt{manage.py}, \texttt{wsgi.py}, \texttt{requirements.txt}, \texttt{Dockerfile} y \texttt{entrypoint.sh}.
+\end{itemize}
+
+El resultado final es un diccionario Python donde cada clave es una ruta relativa de fichero y cada valor es su contenido. Este diccionario se guarda en el campo \texttt{project\_files} del modelo \texttt{GeneratedSite}, comentado mas adelante en la subseccion Evolución del modelo de datos
+
+
+
+\subsection{Fallbacks generacion}
+\label{subsec:fallbacks-generacion}
+
+Durante las pruebas de generacion aprendi que la alucionaciones del LLM eran constantes y que iba a llevar mucho trabajo pulir cada prompt de generacion. El LLM cometia fallos en 
+cualquiera de los pasos, devolviendo codigo vacio, con errores de sintaxis o simplemente codigo random no adaptado a lo que tocaba en ese paso. Para poder tener un proyecto funcional aunque con algun error, decidí añadir \textbf{fallbacks} por cada template generado.
+
+La funcion de los fallbacks era sencilla, si el proyecto tenia un fallo grave, el fallback actuaba y generaba una version minima pero funcional del fichero en cuestio, de esta forma el proyecto saldria funcional sin fallos graves, existirian fallos minimos que harian que el LLM produjese un proyecto algo más genérico pero siempre desplegable.
+
+
+\subsection{Evolución del modelo de datos}
+\label{subsec:modelo-generatedsite}
+
+El modelo \texttt{GeneratedSite} fue variando durante esta fase para reflejar los nuevos estados del sistema.
+Se añadieron los campos \texttt{project\_files} para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre del proyecto, \texttt{preview\_url} para guardar la URL del sitio desplegado (explicado en la siguiente subseccion Workflow despliegue), y dos nuevos conjuntos de estados. El primero, \texttt{generation_status}, seguía el ciclo de vida de la generación con los valores \texttt{pending}, \texttt{generating}, \texttt{ready} y \texttt{error}. El segundo, \texttt{deploy\_status}, reflejaba el estado del despliegue Docker con los valores \texttt{idle}, \texttt{deploying}, \texttt{done} y \texttt{error}. 
+
+Esta separación entre el estado de generación y el estado de despliegue permitía saber con precisión en qué punto del proceso se encontraba cada sitio.
+
+
+\subsection*{Dockerfile, entrypoint y requirements}
+\label{subsec:dockerfile}
+
+Cada proyecto generado incluía un \texttt{Dockerfile}, un script \texttt{entrypoint.sh} y un fichero \texttt{requirements.txt} que en conjunto automatizaban completamente el arranque del sitio. El objetivo era que cualquier proyecto generado por WebBuilder se deplegase mediante Docker pulasndo un botón, sin configuración manual por parte del usuario.
+
+El \texttt{Dockerfile} partía de la imagen oficial \texttt{python:3.12-slim}. Copiaba el \texttt{requirements.txt}, instalaba las dependencias con \texttt{pip} y copiaba el resto del proyecto. Hasta entonces el puerto expuesto era el 8000, sobre el que se serviría la aplicación, esto variaria mas adelante con la mejora del flujo de despliegue de n8n.
+
+El fichero \texttt{requirements.txt} incluido en cada proyecto generado contenía únicamente las dependencias mínimas para el funcionamiento del sitio: \texttt{django>=4.2,<6.0} como framework web, \texttt{requests>=2.28} para que el comando \texttt{load\_data} pudiera descargar los datos de la API original, y \texttt{gunicorn>=21.0} como servidor de producción. La decisión de mantener las dependencias al mínimo fue intencionada: cuantas menos dependencias tenga el proyecto generado, menos probabilidades hay de que el \texttt{docker build} falle por incompatibilidades o paquetes no disponibles.
+
+El script \texttt{entrypoint.sh} era el responsable del arranque completo del sitio, los pasos que ejecutaba son los siguientes:
+
+\begin{enumerate}
+    \item \textbf{Generación de migraciones}: ejecutaba \texttt{python manage.py makemigrations siteapp} para crear los ficheros de migración a partir del \texttt{models.py} generado por el LLM, siendo siteapp el nombre concreto que introdujo el usuario en el schema.
+    \item \textbf{Aplicación de migraciones}: ejecutaba \texttt{python manage.py migrate} para crear las tablas en la base de datos SQLite del contenedor.
+    \item \textbf{Carga de datos}: ejecutaba \texttt{python manage.py load\_data}, el comando generado por el LLM en el paso 6 del generador, que descargaba los datos de la API original e insertaba los registros en la base de datos.
+    \item \textbf{Arranque del servidor}: lanzaba Gunicorn con dos workers y un timeout de 120 segundos para servir la aplicación Django en el puerto 8000.
+\end{enumerate}
+
+Esta secuencia garantizaba que al acceder al sitio por primera vez ya estuviera completamente funcional: base de datos creada, datos cargados y servidor en marcha. El uso de 
+Gunicorn en lugar del servidor de desarrollo de Django era una decisión deliberada para que los sitios generados tuvieran un nivel mínimo de robustez en producción.
+
+
+\subsection{Workflow de despligue n8n}
+\label{subsec:workflow-despliegue}
+
+En paralelo al desarrollo del generador de archivos, se fue construyendo el workflow mas importante del proyecto, encargado del despliegue de las paginas.
+La decision de realizar el despliegue de las paginas con n8n y no con Django fue una decision mas o menos sencilla, el unico problema de desplegar con Django era que el proceso
+de build del Docker puede tardar unos minutos, y si se ejecutaba desde Django la web, el servidor se quedaria bloquedado durante este tiempo. Al separarlo y crearlo con n8n, Django lo unico que tiene que hacer es el enviar la señal para que comience la ejecuccion del workflow.
+
+Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django realiza una llamada POST con el nombre del proyecto como parametro y a partir de aqui el workflow se ejecuta siguiendo los siguientes nodos sucesivamente:
+
+\begin{enumerate}
+    \item \textbf{Descomprimir ZIP}: el primer nodo crea el directorio de despliegue en \texttt{/files/deploys/<project_name>} y descomprime el ZIP del proyecto generado en un subdirectorio \texttt{src/}.
+    \item \textbf{Restablecer contenedor}: antes de construir la nueva imagen, el workflow intenta detener y eliminar cualquier contenedor anterior con el mismo nombre (\texttt{wb\_<project\_name>}). Si el contenedor no existe, el error se ignora y el flujo continúa sin interrupciones.
+    
+    \item \textbf{Elegir puerto}: el nodo escanea los puertos actualmente en uso por Docker en el rango 8100--8999 y selecciona el primer puerto libre disponible. Si no hay ningún puerto libre en ese rango, el flujo lanza un error controlado.
+    
+    \item \textbf{Docker Build}: ejecuta \texttt{docker build} sobre el directorio del proyecto con un timeout de 5 minutos. Si el build falla, captura los últimos 500 caracteres de los logs de error para facilitar el diagnóstico.
+    
+    \item \textbf{Docker Run}: arranca el contenedor en modo \emph{detached} con el nombre y el puerto asignados, mapeando el puerto elegido al puerto interno 8000 del contenedor.
+    
+    \item \textbf{Verificar Docker}: espera 20 segundos para dar tiempo al \texttt{entrypoint.sh} a ejecutar las migraciones y cargar los datos, y luego comprueba que el contenedor sigue en funcionamiento. Si el contenedor ha caído, recupera los últimos 40 líneas de sus logs y lanza un error con esa información para facilitar el diagnóstico.
+
+    \item \textbf{Responder al webhook}: si todo ha ido bien, devuelve a Django un JSON con la URL del preview, el nombre del contenedor y el puerto asignado, que WebBuilder almacena en el campo \texttt{preview\_url} del modelo \texttt{GeneratedSite}.
+\end{enumerate}
+
+Este diseño garantiza que el usuario siempre recibe una respuesta clara: si el despliegue tiene éxito obtiene la URL del sitio generado, y si falla en cualquier paso Django es notificado con información suficiente para actualizar el estado del sitio a \texttt{error} y mostrar un mensaje al usuario explicando lo ocurrido.
 
 
 % Fin diseño e implementacion
