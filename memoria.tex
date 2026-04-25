@@ -442,556 +442,160 @@ Puedes probarlo en \url{https://www.tablesgenerator.com/}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISEÑO E IMPLEMENTACIÓN %
-% Descripcion a full de nuestro trabajo , hay q ser muy detallista, todo lo q hemos hecho %
-% Tiene q quedar muy claro como lo hemos hecho % 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \cleardoublepage
 \chapter{Diseño e implementación}
 \label{sec:diseno}
 
+
+\section{Fase 1: Definición del proyecto}
+\label{sec:definicion-proyecto}
+
+El punto de partida del proyecto fue una reunión con el tutor en abril de 2025, en la que le comente posibles ideas de trabajo.
+En esa primera toma de contacto surgieron un par de ideas mas, las cuales finalmente se acabaron descartando en nuestra segunda reunion,
+ya que decidimos adaptarnos un poco mas a la situacion actual de la Inteligencia Artificial.
+
+
+La primera idea consistía en una aplicación web que, a partir de datos de APIs hospitalarias, ayudara a los paciente a encontrar el centro 
+médico mas adaptado a sus necesidades según una serie de parámetros. 
+La segunda idea ampliaba es primera hacia un asistente de mudanza. Imaginese que alguien quiere instalarse en una ciudad, la aplicación
+recogería todos los datos de las APIs publicas y un parseo de los datos proporcionados por agencias y otras empresas, de tal forma que 
+introduciendo el usuario sus requisitos, se le organizaria un posible plan de vida en la zona.
+Ambas ideas tenían en comun la lectura y procesamiento de APIs publicas, pero el alcance era demasiado corto, lo que limitaba el valor del 
+proyecto. 
+
+
+En la segunda reunion, realizada en Julio de 2025, llegamos a una idea mas acotada, una aplicacion web Django encargada de procesar los datos
+de cualquier API publica y generar automaticamente un sitio web personalizado. Mas tarde pensaría posibles nombres para el proyecto, hasta que 
+al final dimos con el nombre de WebBuilder.
+
+
+En ese momento aun estaba liado con los examenes, pero en los ratos libres iba recogiendo informacion y creando las posibles fases del sistema:
+validacion de la URL, procesamiento de los datos recogidos, preferencias sobre el diseño, etc. David valoro positivamente estos pasos, lo que 
+me dio mas energía para seguir adelante con el proyecto.
+
+
+Durante los meses de verano el proyecto comenzo poco a poco creando las partes mas sencillas para ir dandole forma: la pagina de inicio, el 
+sistema de login y registro de usuarios. Aunque en el futuro todo esto cambiaría, la base mas  o menos se mantendría.
+
+% Poco a poco conforme el proyecto avanzo fui teniendo problemas para poder hacer de verdad  algo personalizado y diferente, era muy dificil procesar los datos de todas las APIs y que no saliesen datos genericos, ahi le surgió a David una idea, la cual dio el giro completo del proyecto y lo convirtio en algo innovador.
+
+% Ibamos a incorporar un modulo de Inteligencia Artificial, la idea no solo era procesarle los datos y que el eligiese los mas adecuados, sino construir un sistema en el que la IA fuese el motor principal y actuase como un desarrollador guiado con prompting engenieering. Pero este cambio estara detallado mas adelante.
+
+Durante los primeros meses siguientes no hubo un gran desarrollo de codigo, sino que dedicamos este periodo a definir con mas detalle el flujo
+de la aplicacion, estuvimos investigando tecnologias y deseñando procesos que deberia seguir el sistema. Este trabajo previo fue muy importante
+para el correcto desarrollo guiado de la aplicacion.
+
+
+\section{Fase 2: Comienzo del desarrollo}
+\label{sec:comienzo-desarrollo}
+
+Con la propuesta del proyecto ya definida, el desarrollo comenzo con fuerza en febrero de 2026. Poco a poco fui creando la estructura base de 
+la aplicación: modelos, sistema de ingestion de datos, logica de analisis heuristico, y una interfaz minima y bastante pobre para poder hacer
+pruebas del flujo completo. La arquitectura hasta este punto era bastante sencilla: una aplicacion Django que recibia una URL, deacargaba los 
+datos de la API, los analizaba y devolvía una propuesta de estructura para el futuro sitio web.
+
+\subsection{Modelo de datos}
+\label{subsec:modelo-datos}
+
+El unico modelo de la base de datos en esta fase era \textbf{APIRequest}, que recogia los datos de cada peticion URL realizada.
+Se encargaba de recoger los siguientes campos: Datos en crudo recogidos de la API (\texttt{raw\_data}), la estructura de datos ya parseada (\texttt{parsed\_data}),
+el estado del análisis mediante un campo de elección (\texttt{pending}, \texttt{processed} o \texttt{error}), y el mapping resultante que se mostraria al usuario
+(\texttt{field\_mapping}). Este modelo fue el eje central durante este sprint y sera la base del analisis durante todo el proyecto
+
+\subsection{Ingestion de datos}
+\label{subsec:ingestion-datos}
+
+El modulo de ingestion de datos, ubicado en \textbf{utils/ingest/} es el encargado de validar la URL introducida por el usuario, realizar la descarga del contenido
+de forma segura y detectar automaticamente el formato de los datos. La validacion comprobaba que la URL procederia de \texttt{http} o \texttt{https}, que fuese
+procedente de un dominio valido y que su longitud no superase los 2048 caracteres. La descarga se realizaba en modo streaming, es decir, en vez de esperar que
+el contenido del archivo se descargue entero, vamos leyendo trozo a trozo procesado, cada trozo tiene un limite de 1MB, y un timeout de 8 segundos. Conseguimos de 
+esta forma evitar que una API con respuestas excesivamente grande nos tumbre o bloquee el sistema.
+
+La deteccion de formato se realiza inspeccionando los primeros caracteres del contenido de la API, de esta forma conseguiamos distinguir entre JSON y XML, que son 
+los contenidos manejados hasta este momento, mas adelante en el capitulo x (meter referencia directa) se aumenta el tipo de datos a procesar. En cualquier caso 
+siempre se devuelve una estructura Python homogenea, que se utiliza en adelante para el sistema, de forma que no es necesario seguir trabajando con el formato 
+original.
+
+\subsection{Deteccion de la colección principal}
+\label{subsection:deteccion-coleccion-principal}
+
+La parte mas compleja de este sprint fue entender la estructura interna de los campos de las distintas APIs. Estos campos realmente son una lista plana de items
+en la raiz, es decir, la colecion principal no esta expuesta, sino que esta envuelta bajo claves de metadatos como \texttt{results}, \texttt{data} o \texttt{items},
+o incluso con varios niveles de profundidad. 
+
+Para resolver esto se implemento un nuevo modulo: \textbf{utils/analysis}, donde se crearon ficheros con funciones importantes como \texttt{find\_main\_items}, la cual recorria recursivamente la estructura de la API, y se evaluaba con un sistema de puntuacion propio para sacar la estructura principal.
+
+Cada lista candidata se puntuaba segun cinco factores:
+
+\begin{itemize}
+    \item \textbf{Densidad de diccionarios}: porcentaje de elementos de la lista que son diccionarios. Las listas con menos de un 55\% de dicts recibían una penalización proporcional, ya que era poco probable que representaran una colección de entidades reales.
+    \item \textbf{Tamaño}: listas con más items recibían mayor puntuación, aunque con un límite para evitar que una lista enorme pero trivial se impusiera sobre una colección más pequeña pero más relevante.
+    \item \textbf{Consistencia de claves}: si todos los diccionarios de la lista compartían aproximadamente las mismas claves, era muy probable que representaran entidades del mismo tipo. Se calculaba como el promedio de claves propias de cada item sobre la unión de todas las claves observadas.
+    \item \textbf{Bonus por claves semánticas}: si los campos de la colección incluían nombres típicos de contenido como \texttt{title}, \texttt{name}, \texttt{id},    \texttt{description} o \texttt{image}, se añadía una bonificación proporcional al número de coincidencias.
+    \item \textbf{Penalización por profundidad}: los paths muy anidados o que pasaban por índices numéricos se penalizaban para favorecer colecciones cercanas a la raíz, que solían ser las más relevantes.
+\end{itemize}
+
+Al finalizar este scoring, se seleccionaba la lista con mayor puntuacion como coleccion principal, junto con la ruta dentro de la estructura original.
+
+\subsection{Sugerencia automatica}
+\label{subsec:sugerencia-automatica}
+
+Una vez localizada la coleccion principal, se realizo la implementacion del nuevo fichero \textbf{utils/mapping.py}, encargado de sugerir automaticamente que campos
+del dataset debian ocupar cada rol: fecha, id, descripcion, etc. Para ello se utilizaba un catalogo predefinido que asociaba cada rol con sus nombres mas hanituales.
+Por ejemplo un campo llamado \texttt{published\_at}, obtenia un alto score para el rol fecha ya que contenia la subcadena \texttt{published}.
+Ademas de la comparacion por nombre, el sistema añadia score extra si el tipo del campo observado coincidia con el tipo esperado en el rol.
+
+Para evitar que la misma clave del dataset se asignara como primera sugerencia de varios roles a la vez, se implementó una funcion llamada \texttt{suggest\_mapping}, que aplicaba una asignación por orden de prioridad: primero se reservaba la mejor clave para el rol \texttt{id}, luego para \texttt{title}, luego para \texttt{description}, y así sucesivamente. Esto reducía la repetición de sugerencias y hacía el mapping resultante más útil para el usuario, sin embargo, ocurrian errores como que algunos campos se quedasen vacios o que al asignarse por orden de prioridad, campos sueltos se asignasen a roles
+que no tenian relacion.
+
+\subsection*{Eleccion pagina}
+\label{subsec:eleccion-pagina}
+
+Para guiar mejor al usuario durante el proceso de mapping, se añadió un sistema de perfiles de intención en \texttt{intents.py}. El usuario podía indicar si quería construir un blog, un portfolio, un catálogo o un directorio, y el sistema reordenaba los roles y ajustaba cuáles eran obligatorios, recomendados u opcionales según ese tipo de sitio.
+
+
+\subsection*{Calidad del mapping}
+\label{subsec:calidad-mapping}
+Además, se implementó un sistema de puntuación de calidad del mapping en \texttt{mapping.py}, que evaluaba de 0 a 100 el mapping introducido por el usuario teniendo en cuenta si había asignado los roles más importantes, si existían duplicados entre roles críticos y qué campos quedaban vacíos. El resultado se mostraba al usuario con una etiqueta cualitativa: \emph{Excelente}, \emph{Bueno}, \emph{Aceptable} o \emph{Mejorable}.
+
+
+\subsection*{Tests}
+\label{subsec:test1}
+
+Desde el primer commit se escribieron tests para los módulos principales: análisis, mapping, normalizer y parsers. Esto permitió verificar el 
+comportamiento del sistema de scoring con datasets variados, detectando casos en los que las heurísticas fallaban antes de que llegaran al usuario.
+\subsection*{Limitaciones del enfoque heurístico} \label{subsec:limitaciones1}
+
+Conforme se probaba el sistema con datasets reales muy distintos entre sí, los límites del enfoque heurístico se fueron haciendo evidentes. Una API de plantas medicinales, una de personajes de ficción y una de productos de e-commerce tienen nomenclaturas de campos completamente diferentes, y un sistema de reglas fijas no podía cubrir todos los casos con la misma fiabilidad. Cuando los nombres de los campos no coincidían con los campos de la API, el mapping era genérico y malo para el usuario. El sistema funcionaba razonablemente bien con APIs convencionales y con campos estándar, pero fallaba ante cualquier dataset con nombres o estructura poco habituales. Esta limitación fue la que motivó el cambio de enfoque descrito en el sprint siguiente.
+
+
+\section{Fase 3: Integracion LLM y n8n}
+\label{sec:integracion-llm-n8n}
+
+Con la fase 2 terminada y viendo que las limitaciones eran evidentes, decidimos hacer un cambio muy importante para el futuro del proyecto. Abandonamos 
+la idea del sistema de reglas que teniamos, aunque no en la totalidad, ya que habia partes que nos seguirian siendo utiles. Decidimos asi integrar un
+modelo de lenguaje (LLM) como nucleo o motor del analisis y generacion de las paginas. Hasta este momento el sistema intentaba entender los datos mediante
+puntuaciones y comparaciones, pero decidimos que fuese la Inteligencia Artificial la encargada de escoger y proponer la estructura del sitio y decidiera que 
+campos mostrar. Como comente antes, no todo el flujo de analisis e ingesta se cambio, se eliminaron las partes de score y propuesta de dataset, pero en parseo 
+y analisis de los campos se mantuvo y modifico levemente, se metio todo el dataset en una estructura, que seria la que se pasaria al LLM, de forma que evitariamos
+alucinaciones o errores del LLM en la lectura de la API. Esta parte esta mejor explicada en la subseccion anti-alucinaciones (AÑADIR REFERENCIA)
+
+
+\subsection{Conexion con LLM}
+\label{subsec:conexion-llm}
+
+Para poder realizar la conexion con el LLM, el primer paso fue crear el modulo \textbf{utils/llm}, y dentro creamos el archivo \texttt{client.py}, el cual
+implementa la funcion \texttt{chat\_completions}. Esta funcion se encarga de hacer una unica cosa: enviar un mensaje al LLM y devilver la respuesta en texto
+plano.
+
+Una decision impotante fue utilizar el estandar de la mayoria de proveedores para realizar la conexion, utilizando de esta forma el endpoint \textbf{/chat/completions}. En este caso creado para poder realizar pruebas con varios LLM de diferentes proovedores (OpenRouter, Groq, NVIDIA) y cualquier agente local.
+Otra decision fue crear \texttt{.env}, de forma que la URL base, la API key y el modelo se leen de variables de entorno definidas en dicho fichero, lo que permite cambiar de proveedor sin tocar una sola línea de código.
+
+
+% Fin diseño e implementacion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Aquí viene todo lo que has hecho tú (tecnológicamente). 
-% Puedes entrar hasta el detalle. 
-% Es la parte más importante de la memoria, porque describe lo que has hecho tú.
-% Eso sí, normalmente aconsejo no poner código, sino diagramas.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Indice de Diseño e Implementacion
-% 4.1 - Arquitectura general
-% 4.2 - Ingestion de datos (+)
-% 4.3 - Analisis estructural del dataset (+)
-% 4.4 - Integración del LLM (+)
-% 4.5 - Generación del proyecto Django (+)
-% 4.6 - Interfaz y flujo del usuario (+)
-% 4.7 - Automatizaciones con n8m (+)
-% 4.8 - Panel de adminisitracion y métricas (+)
-% 4.9 - Base de datos (+)
-% 4.10 - Seguridad (+)
-% 4.11 - Internacionalización
-
-% 4.1 - Arquitectura general
-\section{Arquitectura general}
-\label{sec:arquitectura}
-
-WebBuilder es una aplicación web construida en Python sobre el framework Django que automatiza la generación de sitios
-web a partir de datos estructurados. Para ello, orquesta tres componentes que trabajan de forma coordinada:
-
-\begin{itemize}
-    \item \textbf{Django}: Núcleo de la aplicación. Gestiona la lógica de negocio, la autenticación de usuarios,
-    las llamadas al LLM y la generación del código del proyecto.
-    \item \textbf{n8n}: Motor de automatización de flujos. Se encarga de las notificaciones por correo, el despliegue
-    en Docker y la monitorización del sistema, desacoplando estas tareas del core de Django.
-    \item \textbf{Docker}: Entorno de ejecución para los proyectos generados. Cada sitio se construye y ejecuta en un
-    contenedor aislado, lo que garantiza portabilidad y reproducibilidad.
-\end{itemize}
-
-Los tres componentes se ejecutan de forma independiente y se comunican mediante llamadas HTTP y una carpeta compartida
-en disco. Esta arquitectura desacoplada permite añadir o modificar cualquier componente sin afectar al resto.
-
-El flujo completo comienza cuando el usuario se registra en la plataforma e introduce la URL de una API pública o sube
-directamente un fichero con los datos. El sistema soporta los formatos JSON, XML, CSV y GeoJSON. Junto con los datos,
-el usuario puede escribir un prompt en lenguaje natural describiendo el tipo de sitio que desea: estructura, estilo
-visual, idioma, etc. Para facilitar esta tarea, la interfaz ofrece una guía de prompt mediante botones predefinidos.
-
-Con estos datos, el sistema realiza un análisis estructural del dataset para extraer sus campos disponibles y, a
-continuación, invoca al LLM, que propone un mapeo con la estructura del sitio: tipo de página (catálogo, blog,
-dashboard u otro), título y campos relevantes con sus etiquetas. El usuario puede revisar y modificar este mapeo
-antes de continuar.
-
-Una vez aceptado el plan, se genera el proyecto Django completo. Al finalizar, el usuario accede a una página de
-resultados con las métricas de la generación, desde la que puede desplegar el sitio en un contenedor local para
-previsualizarlo, descargar el ZIP con todos los ficheros, o editar el código directamente mediante el editor integrado.
-
-Como se puede ver en la figura~\ref{fig:arquitectura}, los tres componentes interactúan de forma clara y diferenciada:
-Django actúa como orquestador central, n8n gestiona los flujos asíncronos y Docker proporciona el entorno de
-ejecución aislado para cada proyecto generado.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=9cm, keepaspectratio]{img/arquitectura.png}
-  \caption{Arquitectura general de WebBuilder}
-  \label{fig:arquitectura}
-\end{figure}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Por ejemplo, puedes verlo en la figura~\ref{fig:arquitectura}.
-% \LaTeX \ pone las figuras donde mejor cuadran. 
-% Y eso quiere decir que quizás no lo haga donde lo hemos puesto\ldots 
-% Eso no es malo.
-% A veces queda un poco raro, pero es la filosofía de \LaTeX: tú al contenido, que yo me encargo de la maquetación.
-
-% Recuerda que toda figura que añadas a tu memoria debe ser explicada.
-% Sí, aunque te parezca evidente lo que se ve en la figura~\ref{fig:arquitectura}, la figura en sí solamente es un apoyo a tu texto.
-% Así que explica lo que se ve en la figura, haciendo referencia a la misma tal y como ves aquí.
-% Por ejemplo: En la figura~\ref{fig:arquitectura} se puede ver que la estructura del \emph{parser} básico, que consta de seis componentes diferentes: los datos se obtienen de la red, y según el tipo de dato, se pasará a un \emph{parser} específico y bla, bla, bla\ldots
-
-% Si utilizas una base de datos, no te olvides de incluir también un diagrama de entidad-relación. IMPORTANTE
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 4.2 - Ingestión de datos (toda la ingesta y parseo antes de la IA)
-\section{Ingestión de datos}
-\label{sec:ingestion-datos}
-El módulo de ingestión de datos constituye la primera fase del pipeline de WebBuilder. Su responsabilidad es obtener los datos en crudo desde la fuente
-que indique el usuario y transformarlos en una estructura Python homogénea que el resto del sistema pueda procesar sin conocer el formato de origen.
-Se encuentra en la carpeta \texttt{utils/ingest/} y está compuesto por dos módulos:
-
-\begin{itemize}
-    \item \texttt{utils/ingest/url\_reader.py}: Validación de la URL, descarga segura y lectura de ficheros subidos.
-    \item \texttt{utils/ingest/parsers.py}: Detección automática del formato y parseo a estructura Python.
-\end{itemize}
-
-% 4.2.1 Entrada de datos
-\subsection{Entrada de datos}
-\label{subsec:entrada-datos}
-WebBuilder acepta dos fuentes de entrada distintas, pensadas para cubrir los casos de uso más habituales a los que se enfrenta un usuario:
-
-\begin{itemize}
-    \item \textbf{URL de API pública}: el usuario introduce una URL y WebBuilder realiza una petición HTTP GET para descargar el contenido directamente.
-    Es la opción principal y la más cómoda cuando la API es de acceso libre.
-    \item \textbf{Fichero subido}: el usuario sube un fichero desde su máquina local. Esta opción está pensada para situaciones en las que la API
-    requiere autenticación, el acceso es restringido, o el usuario ya tiene los datos descargados previamente.
-\end{itemize}
-
-Ambos caminos desembocan en la misma lógica de parseo. Desde el punto de vista del resto del sistema son equivalentes: en ambos casos se produce
-una tupla \texttt{(texto\_crudo, resumen)} que alimenta la fase siguiente. Esta decisión de diseño simplifica el pipeline, ya que las fases de
-análisis y generación no necesitan saber de dónde vienen los datos.
-
-% 4.2.2 Validación y descarga segura
-\subsection{Validación y descarga segura}
-\label{subsec:validacion-descarga}
-Dado que la entrada de datos proviene de fuentes externas no controladas, es imprescindible aplicar medidas de seguridad antes de realizar cualquier
-petición a la red. La función \texttt{validate\_url} del módulo \texttt{url\_reader.py} aplica tres controles previos a la descarga:
-
-\begin{itemize}
-    \item El esquema de la URL debe ser \texttt{http} o \texttt{https}. No se permiten protocolos alternativos como \texttt{ftp}, \texttt{file} o \texttt{data}.
-    \item La URL debe contener un dominio válido, es decir, el campo \texttt{netloc} no puede estar vacío.
-    \item La longitud total de la URL no puede superar los 2048 caracteres, límite habitual en navegadores y servidores web.
-\end{itemize}
-
-Una vez superada la validación, la descarga se realiza con la librería \texttt{requests} en modo \emph{streaming}, lo que permite inspeccionar
-y controlar el flujo de bytes sin cargar todo el contenido en memoria de golpe. Se aplican los siguientes parámetros de seguridad:
-
-\begin{itemize}
-    \item \textbf{Timeout de 8 segundos}: si el servidor remoto no responde en ese tiempo, la petición se aborta y se lanza un error controlado
-    que el usuario ve como un mensaje legible, sin exponer trazas internas.
-    \item \textbf{Descarga por \emph{chunks} de 8192 bytes}: el contenido se acumula en un \texttt{bytearray} incrementalmente, lo que permite
-    cortar la descarga en cuanto se supera el límite.
-    \item \textbf{Límite de 1\,MB} (\texttt{MAX\_BYTES = 1\_000\_000}): si el servidor anuncia un \texttt{Content-Length} superior en las cabeceras
-    de respuesta, la petición se aborta antes de descargar nada. Si no lo anuncia, el límite se aplica chunk a chunk durante la descarga.
-    \item \textbf{Cabecera} \texttt{User-Agent: WebBuilder/1.0}: identifica al cliente ante el servidor remoto.
-\end{itemize}
-
-La función \texttt{fetch\_url} captura las excepciones más habituales de \texttt{requests} (\texttt{Timeout}, \texttt{ConnectionError},
-\texttt{HTTPError}) y las convierte en \texttt{ValueError} con mensajes descriptivos, evitando que el usuario vea trazas de Python en la interfaz.
-
-% 4.2.3 Detección automática de formato
-\subsection{Detección automática de formato}
-\label{subsec:deteccion-automatica}
-Uno de los requisitos del proyecto es que el usuario no tenga que indicar el formato de sus datos. El sistema detecta automáticamente el formato
-entre los cuatro soportados mediante la función \texttt{detect\_format}, que inspecciona los primeros caracteres del texto crudo siguiendo
-un orden de prioridad:
-
-\begin{itemize}
-    \item \textbf{GeoJSON}: tiene preferencia sobre JSON genérico. Si el texto empieza por \texttt{\{} o \texttt{[} y al parsear los primeros
-    500 caracteres se detecta un objeto con \texttt{type == "FeatureCollection"}, se clasifica como GeoJSON. Limitar el parseo a 500 caracteres
-    evita procesar el dataset completo en esta fase de detección.
-    \item \textbf{JSON}: el texto, tras eliminar espacios iniciales, empieza por \texttt{\{} o \texttt{[} y no cumple la condición anterior.
-    \item \textbf{XML}: el texto empieza por \texttt{<}.
-    \item \textbf{CSV}: no cumple ninguno de los anteriores, pero la primera línea contiene comas o puntos y coma.
-\end{itemize}
-
-Si ninguno de estos patrones se cumple, \texttt{detect\_format} devuelve \texttt{unknown} y el parseo falla con un error controlado
-que informa al usuario de los formatos soportados.
-
-% 4.2.4 Parseo seguro
-\subsection{Parseo seguro}
-\label{subsec:parseo-seguro}
-La función \texttt{parse\_raw} es la responsable de transformar el texto crudo en una estructura Python nativa. Su objetivo es que, a partir
-de este punto, el resto del pipeline trabaje siempre con \texttt{dict} o \texttt{list} de Python, sin necesidad de saber qué formato tenían
-los datos originalmente. Cada formato tiene su propia estrategia de parseo:
-
-\paragraph{JSON.} Se utiliza \texttt{json.loads} de la librería estándar. No requiere precauciones adicionales porque \texttt{json.loads}
-no ejecuta código arbitrario y lanza excepciones descriptivas ante JSON malformado.
-
-\paragraph{XML.} El parseo de XML requiere precauciones especiales porque el estándar permite construcciones peligrosas como las entidades
-externas (ataques XXE) o la expansión exponencial de entidades anidadas (billion laughs). Para prevenirlas, se valida primero el documento
-con \texttt{defusedxml.ElementTree}, que rechaza cualquier XML que contenga este tipo de construcciones. Una vez validado, se convierte
-a \texttt{dict} con \texttt{xmltodict.parse}, obteniendo el mismo tipo de estructura que el parseador JSON.
-
-\paragraph{CSV.} Se emplea \texttt{csv.Sniffer} sobre los primeros 2000 caracteres para detectar automáticamente el delimitador utilizado,
-ya sea coma o punto y coma. Si \texttt{Sniffer} no consigue determinarlo, se recurre al dialecto estándar \texttt{csv.excel} como
-fallback. A continuación, \texttt{csv.DictReader} convierte cada fila en un \texttt{dict} cuyas claves son los encabezados de la primera
-línea. El parseo se limita a las primeras 2000 filas para evitar saturar la memoria con ficheros muy grandes.
-
-\paragraph{GeoJSON.} Al ser un subconjunto de JSON con estructura conocida, el parseo es determinista. Se extraen las \texttt{features}
-del documento, y de cada una se toman sus \texttt{properties}, que contienen los atributos no geométricos del elemento. Como campo
-adicional se añade \texttt{\_geometry\_type}, que recoge el tipo de geometría (punto, línea, polígono, etc.) por si resulta útil
-en fases posteriores. El resultado es una \texttt{list[dict]}, el mismo formato que producen los demás parseadores, lo que garantiza
-que el resto del pipeline no necesita ningún tratamiento especial para GeoJSON.
-
-El resultado de esta fase es siempre una tupla \texttt{(formato\_detectado, estructura)}, donde \texttt{estructura} es un \texttt{dict},
-una \texttt{list} o una \texttt{list[dict]} dependiendo de la forma original del dataset. A partir de este punto, el módulo de análisis
-estructural toma el relevo.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 4.3 - Análisis estructural del dataset
-\section{Análisis estructural del dataset}
-\label{sec:analisis-estructural}
-Una vez que los datos han sido descargados y parseados, el siguiente reto es entender su estructura interna. Los datasets reales rara vez tienen
-una forma plana y predecible: es habitual encontrar la colección de items envuelta en varios niveles de anidamiento, mezclada con metadatos
-de paginación, o con claves inconsistentes entre items. Enviar todo ese ruido al LLM directamente sería ineficiente y propenso a errores.
-
-Por eso, antes de invocar al modelo, WebBuilder aplica un análisis estructural propio que localiza la colección principal de items, extrae
-sus claves disponibles y construye un resumen limpio. Este análisis se implementa en la carpeta \texttt{utils/analysis/} y está compuesto
-por los siguientes módulos:
-
-\begin{itemize}
-    \item \texttt{detection.py}: algoritmo de scoring y detección de la colección principal mediante recorrido recursivo.
-    \item \texttt{builder.py}: consolidación de toda la información del análisis en un único diccionario para el frontend y el LLM.
-    \item \texttt{helpers.py}: utilidades para navegar estructuras anidadas a través de paths.
-    \item \texttt{constants.py}: constantes numéricas del sistema de scoring.
-\end{itemize}
-
-% 4.3.1 Detección de la colección principal
-\subsection{Detección de la colección principal}
-\label{subsec:deteccion-coleccion}
-El problema central de esta fase es que el dataset no siempre expone la colección de items en el nivel raíz. Una API típica puede devolver
-una respuesta como la del siguiente ejemplo, donde los datos reales están envueltos bajo varias claves de metadatos:
-
-\begin{lstlisting}[language=json, caption={Ejemplo de respuesta típica de una API REST}]
-{
-  "status": "ok",
-  "total": 150,
-  "page": 1,
-  "results": [
-    { "id": 1, "title": "Elemento A", "category": "X", "price": 9.99 },
-    { "id": 2, "title": "Elemento B", "category": "Y", "price": 14.99 },
-    ...
-  ]
-}
-\end{lstlisting}
-
-En este caso, la colección principal es \texttt{results}, no la raíz del JSON. La función \texttt{find\_main\_items} de
-\texttt{detection.py} resuelve este problema recorriendo recursivamente toda la estructura mediante \texttt{\_walk\_collect\_best},
-que evalúa cada lista que encuentra y se queda con la que obtiene mayor puntuación. Este recorrido garantiza que la colección
-principal se encuentra independientemente de la profundidad a la que esté anidada.
-
-La puntuación de cada lista candidata se calcula en \texttt{\_score\_list} a partir de cinco factores:
-
-\begin{itemize}
-    \item \textbf{Densidad de dicts}: porcentaje de elementos de la lista que son diccionarios. Una lista compuesta únicamente
-    de strings o números difícilmente representa una colección de entidades. Si la densidad cae por debajo de \texttt{MIN\_DICT\_DENSITY},
-    se aplica una penalización proporcional a la diferencia.
-
-    \item \textbf{Tamaño de la lista}: más items suele ser indicativo de que se trata de la colección real. Sin embargo, el score
-    crece con $\sqrt{n}$ en lugar de hacerlo linealmente, para evitar que listas muy grandes pero triviales superen a colecciones
-    pequeñas pero más informativas. El valor se satura en \texttt{MAX\_SIZE\_SCORE} para prevenir abusos.
-
-    \item \textbf{Consistencia de claves}: si todos los dicts de la lista comparten aproximadamente las mismas claves, es muy probable
-    que representen entidades homogéneas del mismo tipo. Se calcula como el promedio de $|claves\_item| / |union\_claves|$ sobre
-    una muestra de los primeros items.
-
-    \item \textbf{Bonus por claves semánticas}: si las claves presentes en la muestra coinciden con nombres típicos de contenido
-    (\texttt{GOOD\_KEYS}: \texttt{title}, \texttt{name}, \texttt{id}, \texttt{description}, \texttt{price}, etc.), se añade
-    un bonus proporcional al número de coincidencias, con un máximo de seis.
-
-    \item \textbf{Penalización por profundidad}: los paths muy anidados o con índices numéricos se penalizan para favorecer
-    colecciones cercanas a la raíz, que suelen ser las más relevantes. Se aplican las constantes \texttt{PATH\_INDEX\_PENALTY}
-    y \texttt{PATH\_LENGTH\_PENALTY}.
-\end{itemize}
-
-Al finalizar el recorrido, se devuelve la lista con mayor puntuación junto con su \texttt{path} dentro de la estructura original,
-lo que permite acceder a ella posteriormente sin volver a recorrer el árbol.
-
-% 4.3.2 Extracción de claves disponibles
-\subsection{Extracción de claves disponibles}
-\label{subsec:extraccion-claves}
-Una vez localizada la colección principal, se construye la lista \texttt{available\_keys}, que recoge todas las claves que aparecen
-en los items de la colección. Para ello se analizan hasta \texttt{MAX\_SAMPLE\_ITEMS} elementos, contando cuántas veces aparece
-cada clave. Las claves se organizan en dos grupos complementarios:
-
-\begin{itemize}
-    \item \textbf{top\_keys}: claves ordenadas por frecuencia de aparición. Las más frecuentes son las que aparecen en prácticamente
-    todos los items y suelen ser las más relevantes para el sitio generado.
-    \item \textbf{sample\_keys}: todas las claves que aparecen al menos una vez, extraídas del primer item de la colección.
-    Complementan a \texttt{top\_keys} recogiendo campos opcionales o menos frecuentes.
-\end{itemize}
-
-La unión de ambos grupos forma \texttt{available\_keys}, que se convierte en la pieza clave del contrato con el LLM: cuando el
-modelo proponga un schema en la fase siguiente, se le exigirá que todos los campos que incluya pertenezcan estrictamente a esta
-lista. De esta forma, el análisis estructural actúa como una barrera que impide al LLM alucinar claves que no existen en el
-dataset real, independientemente de lo que el modelo considere plausible basándose en su entrenamiento.
-
-% 4.3.3 Resumen del dataset
-\subsection{Resumen del dataset}
-\label{subsec:resumen-dataset}
-El módulo \texttt{builder.py} actúa como punto de consolidación de todo el análisis. Su función \texttt{build\_analysis} orquesta
-los pasos anteriores y produce un único diccionario estructurado que sirve a dos propósitos distintos: informar al usuario en la
-interfaz y alimentar al LLM en la fase siguiente.
-
-El diccionario resultante incluye el formato detectado del dataset, el tipo de la raíz (\texttt{dict} o \texttt{list}), toda la
-información sobre la colección principal (path, número de items y claves detectadas), las \texttt{available\_keys} organizadas
-por frecuencia, y un mensaje descriptivo para los casos en los que no se haya podido detectar una colección principal clara.
-
-Este resumen se muestra al usuario antes de invocar al LLM, lo que le permite validar a simple vista que el sistema ha interpretado
-correctamente la estructura de su dataset. Si el análisis ha detectado la colección equivocada o ha malinterpretado el formato,
-el usuario puede corregirlo antes de continuar, evitando que un error estructural se propague hasta la fase de generación.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 4.4 INTEGRACIÓN CON EL LLM
-\section{Integración del LLM}
-\label{sec:integracion-llm}
-El módulo LLM, situado en la carpeta \texttt{utils/llm/}, es el núcleo inteligente de WebBuilder. Es el responsable de comunicarse con los
-modelos de lenguaje que analizan el dataset y proponen al usuario un schema orientativo con la estructura del sitio que se va a generar.
-Este schema no es definitivo: el usuario puede revisarlo, modificarlo campo a campo o pedir al modelo que lo regenere con un prompt diferente
-antes de continuar.
-
-Una de las decisiones de diseño más relevantes de este módulo es su neutralidad respecto al proveedor. El sistema no está acoplado a ningún
-modelo ni servicio concreto: funciona con cualquier LLM que exponga una API compatible con el formato de OpenAI, que se ha convertido en
-el estándar del sector. Esto incluye tanto proveedores en la nube como instancias locales, lo que da al usuario plena libertad
-para elegir el modelo que prefiera o tenga disponible.
-
-El módulo está compuesto por los siguientes ficheros:
-
-\begin{itemize}
-    \item \texttt{client.py}: cliente HTTP mínimo compatible con el formato OpenAI.
-    \item \texttt{llm\_catalog.py}: catálogo de modelos preconfigurados disponibles en la interfaz.
-    \item \texttt{planner.py}: generación y validación del schema dinámico a partir del dataset.
-    \item \texttt{enrich\_prompt.py}: enriquecimiento semántico del prompt del usuario.
-    \item \texttt{consistency\_checker.py}: validación del código generado por el LLM.
-    \item \texttt{generator\_prompts.py}: prompts de generación de cada fichero del proyecto.
-    \item \texttt{design/}: sistema de diseño visual con presets por tipo de sitio.
-    \item \texttt{examples/}: ejemplos few-shot usados en los prompts de generación.
-\end{itemize}
-
-% 4.4.1 Cliente LLM agnóstico
-\subsection{Cliente LLM agnóstico}
-\label{subsec:cliente-llm}
-El fichero \texttt{client.py} implementa la función \texttt{chat\_completion}, que actúa como capa de abstracción entre WebBuilder
-y cualquier proveedor de LLM. Su diseño es deliberadamente minimalista: hace una única cosa, enviar un mensaje y devolver la respuesta
-en texto plano, pero lo hace de forma robusta y desacoplada del resto del sistema.
-
-La función utiliza el endpoint \texttt{/chat/completions}, que es el estándar definido por OpenAI y adoptado por la práctica totalidad
-de proveedores del ecosistema actual. Una petición a este endpoint consiste en una lista de mensajes con roles
-(\texttt{system} y \texttt{user}), un identificador de modelo y parámetros de generación como la temperatura. El proveedor devuelve
-la respuesta del modelo en el campo \texttt{choices[0].message.content} de un objeto JSON.
-
-La función acepta los siguientes parámetros:
-
-\begin{itemize}
-    \item \texttt{user\_text}: el mensaje del usuario, que contiene el prompt real con los datos y las instrucciones específicas de la tarea.
-    \item \texttt{system\_text}: el mensaje de sistema, que establece el comportamiento general del modelo para esa llamada concreta.
-    \item \texttt{temperature}: controla la aleatoriedad de la respuesta. Por defecto se fija en \texttt{0.2}, un valor bajo que favorece
-    respuestas deterministas y reduce la variabilidad, lo cual es especialmente importante cuando se espera JSON estructurado como salida.
-    \item \texttt{model}, \texttt{base\_url}, \texttt{api\_key}: parámetros opcionales de conexión. Si no se proporcionan explícitamente,
-    se toman de las variables de entorno de Django (\texttt{LLM\_MODEL}, \texttt{LLM\_BASE\_URL}, \texttt{LLM\_API\_KEY}), lo que
-    permite cambiar de proveedor simplemente modificando el fichero \texttt{.env} sin tocar el código.
-\end{itemize}
-
-La función captura dos categorías de errores y los envuelve en una excepción propia \texttt{LLMError}: los errores de red
-(\texttt{RequestException}), que ocurren cuando el proveedor no es alcanzable o la conexión se interrumpe, y los errores HTTP
-(códigos de estado \texttt{>=~400}), que indican problemas de autenticación, cuota agotada o modelo no disponible. Al unificar
-ambos tipos bajo \texttt{LLMError}, el resto del pipeline puede manejarlos de forma uniforme sin necesidad de conocer los detalles
-del transporte subyacente.
-
-Gracias a este diseño, WebBuilder es compatible de forma nativa con cualquier proveedor que implemente el formato OpenAI, entre ellos:
-
-\begin{itemize}
-    \item \textbf{Groq} (\texttt{https://api.groq.com/openai/v1}): conocido por su velocidad de inferencia, especialmente con modelos Llama.
-    \item \textbf{OpenRouter} (\texttt{https://openrouter.ai/api/v1}): agrega cientos de modelos de distintos proveedores bajo una única API.
-    \item \textbf{NVIDIA NIM} (\texttt{https://build.nvidia.com/models}): plataforma de inferencia optimizada para modelos en GPUs NVIDIA.
-    \item \textbf{Cualquier LLM local} compatible con el formato OpenAI, como Ollama o LM Studio, para usuarios que prefieran
-    ejecutar el modelo en su propia infraestructura sin depender de servicios externos.
-\end{itemize}
-
-% 4.4.2 Catálogo de modelos disponibles
-\subsection{Catálogo de modelos LLM}
-\label{subsec:catalogo-modelos}
-Aunque el sistema es compatible con cualquier proveedor, no todos los usuarios disponen de una API key propia ni quieren configurar
-un modelo personalizado. Para cubrir este caso, el fichero \texttt{llm\_catalog.py} define un catálogo centralizado de modelos
-preconfigurados que el usuario puede seleccionar directamente desde la interfaz sin necesidad de registrarse en ningún proveedor
-adicional ni introducir credenciales.
-
-Actualmente el catálogo incluye tres modelos, cada uno con un perfil distinto que lo hace más adecuado para diferentes situaciones:
-
-\begin{itemize}
-    \item \textbf{Llama 4 Scout} (Groq): es el modelo recomendado por defecto. Su principal ventaja es la velocidad de inferencia
-    que ofrece la plataforma Groq, lo que se traduce en tiempos de respuesta notablemente más bajos que otros proveedores. Es gratuito
-    con un límite de 30\,000 tokens por minuto, suficiente para el uso habitual de la plataforma. Ofrece un buen equilibrio entre
-    calidad de generación y latencia.
-
-    \item \textbf{Llama 3.3 70B} (OpenRouter): modelo de mayor tamaño y capacidad de razonamiento. Al tener más parámetros, tiende
-    a producir código más elaborado y contextualmente coherente, aunque a costa de una latencia superior. Es una buena opción cuando
-    la calidad del resultado prima sobre la velocidad.
-
-    \item \textbf{Qwen3 Coder} (OpenRouter): modelo especializado en la generación de código. Produce HTML y CSS más limpios y
-    estructurados que los modelos de propósito general, lo que lo convierte en una opción interesante para proyectos donde el
-    aspecto visual del sitio generado es especialmente importante.
-\end{itemize}
-
-Cada entrada del catálogo define un conjunto de campos: identificador del modelo, nombre legible, proveedor, \texttt{base\_url},
-descripción, y una lista de ventajas e inconvenientes. Esta estructura permite que la interfaz muestre información útil al usuario
-para que pueda elegir el modelo más adecuado a su caso sin necesidad de conocer los detalles técnicos de cada proveedor.
-
-Desde el punto de vista del mantenimiento, ampliar el catálogo es trivial: basta con añadir una nueva entrada al fichero sin
-modificar ninguna otra parte del sistema. El cliente LLM descrito en la sección anterior se encarga de construir la petición
-correctamente a partir de los campos \texttt{base\_url} y \texttt{model} de la entrada seleccionada.
-
-% 4.4.3 Selección de modelo por usuario
-\subsection{Selección de modelo por usuario}
-\label{subsec:seleccion-modelo}
-El catálogo común cubre el caso de uso general, pero hay usuarios que prefieren utilizar su propia cuenta en un proveedor concreto,
-acceder a un modelo no incluido en el catálogo, o incluso conectar una instancia local. Para dar soporte a estos casos, WebBuilder
-permite que cada usuario configure su propio modelo personalizado desde la página de perfil.
-
-Esta funcionalidad se apoya en el modelo \texttt{UserProfile}, que mantiene una relación \texttt{OneToOne} con el modelo \texttt{User}
-de Django y almacena tres campos adicionales:
-
-\begin{itemize}
-    \item \texttt{custom\_llm\_base\_url}: la URL base del proveedor elegido por el usuario.
-    \item \texttt{custom\_llm\_model}: el identificador del modelo, tal y como lo espera el proveedor.
-    \item \texttt{custom\_llm\_api\_key}: la API key del usuario, almacenada cifrada mediante \texttt{EncryptedCharField}.
-\end{itemize}
-
-La decisión de qué modelo usar en cada petición la toma la función \texttt{\_resolve\_llm}, definida en \texttt{views/assistant.py}.
-Esta función recibe la elección del usuario desde el formulario y sigue dos caminos:
-
-\begin{itemize}
-    \item Si el usuario ha seleccionado un modelo del catálogo común, se utilizan la \texttt{base\_url} y el identificador de modelo
-    definidos en el catálogo, junto con la API key del servidor configurada en el fichero \texttt{.env}. El usuario no necesita
-    aportar ninguna credencial.
-    \item Si el usuario ha seleccionado la opción de modelo personalizado, se recuperan los tres campos de su \texttt{UserProfile}.
-    La API key se descifra de forma transparente en el momento del acceso al ORM, sin que ninguna otra parte del código tenga que
-    gestionar el descifrado explícitamente.
-\end{itemize}
-
-Los parámetros resueltos, \texttt{model}, \texttt{base\_url} y \texttt{api\_key}, se propagan explícitamente a través de toda la
-cadena de llamadas: desde la vista del asistente hasta \texttt{planner.py}, desde ahí hasta \texttt{project\_generator.py} y
-finalmente hasta \texttt{client.py}. Cada función los acepta como parámetros opcionales con fallback a los valores definidos en
-\texttt{settings}, lo que garantiza que el comportamiento por defecto sigue funcionando aunque no se pasen explícitamente.
-
-El cifrado simétrico de la API key mediante Fernet y la librería \texttt{django-encrypted-model-fields} se detalla en la
-sección~\ref{sec:seguridad}.
-
-% 4.4.4 Planner: generación del schema dinámico
-\subsection{Planner: generación del schema dinámico}
-\label{subsec:planner}
-El fichero \texttt{planner.py} es el encargado de transformar el resultado del análisis estructural en una propuesta concreta de schema
-que el usuario puede revisar y aprobar. Este schema tiene una forma fija que el resto del sistema espera y que el LLM debe respetar
-estrictamente:
-
-\begin{lstlisting}[language=json, caption={Estructura del schema dinámico generado por el planner}]
-{
-  "site_type": "blog | portfolio | catalog | dashboard | other",
-  "site_title": "Nombre descriptivo del sitio",
-  "fields": [
-    { "key": "<clave_del_dataset>", "label": "Etiqueta legible" },
-    ...
-  ]
-}
-\end{lstlisting}
-
-Para obtener este schema, se construye un prompt estructurado que se envía al LLM con toda la información relevante del dataset.
-El prompt incluye el objetivo del usuario escrito en lenguaje natural, la lista \texttt{available\_keys} extraída en la fase de
-análisis, hasta tres items reales del dataset como ejemplos (truncados para no disparar el consumo de tokens), y el
-\texttt{main\_collection\_path} como contexto adicional. Junto con estos datos, el prompt incorpora un conjunto de reglas de formato
-muy explícitas: el modelo debe devolver únicamente un objeto JSON válido, sin bloques de código Markdown, sin texto introductorio
-y sin ningún contenido fuera del JSON.
-
-Esta rigidez en el formato de salida es intencionada. Al tratarse de una respuesta que va a ser parseada automáticamente, cualquier
-texto adicional que el modelo añada por cortesía o por inercia rompería el parseo. Para mitigar este riesgo, la función
-\texttt{parse\_llm\_json} aplica una limpieza previa que elimina bloques Markdown y caracteres sobrantes antes de intentar parsear
-el JSON, cubriendo los casos en los que el modelo ignora la instrucción a pesar de haberla recibido.
-
-Si el parseo tiene éxito, el schema pasa por la función \texttt{\_validate\_and\_normalize\_schema} antes de ser aceptado,
-que aplica las validaciones descritas en la sección siguiente. Si el LLM falla o devuelve una respuesta irrecuperable, el sistema
-reintenta automáticamente una vez con una pista sobre el error cometido. Si el segundo intento también falla, se activa un
-fallback que construye un schema básico con todas las claves disponibles, garantizando que el flujo nunca se interrumpe por
-un error del modelo.
-
-% 4.4.5 Protección anti-alucinaciones
-\subsection{Protección anti-alucinaciones}
-\label{subsec:anti-alucinaciones}
-La principal fuente de riesgo al trabajar con LLMs en un pipeline automatizado es que el modelo invente información que no existe
-en el dataset, lo que en el contexto del planner se traduce en proponer claves de campos que nunca estuvieron en los datos originales.
-Para hacer el sistema robusto frente a este comportamiento, la función \texttt{\_validate\_and\_normalize\_schema} aplica seis
-capas de defensa independientes antes de aceptar cualquier schema:
-
-\begin{itemize}
-    \item \textbf{Normalización del tipo de sitio}: la función \texttt{\_normalize\_site\_type} mapea cualquier variante textual
-    que devuelva el modelo al conjunto cerrado de valores permitidos. Variantes como \texttt{shop} o \texttt{store} se convierten
-    en \texttt{catalog}; \texttt{news} o \texttt{post} en \texttt{blog}. Todo lo que no encaje en ninguna categoría conocida
-    cae en \texttt{other}, evitando que un valor inesperado rompa la lógica posterior.
-
-    \item \textbf{Validación contra \texttt{available\_keys}}: cada clave propuesta por el LLM se comprueba contra la lista de
-    claves reales extraída del dataset. Si la clave no está presente, se intenta un match case-insensitive para cubrir diferencias
-    de capitalización. Si este segundo intento tampoco encuentra coincidencia, la clave se descarta silenciosamente sin interrumpir
-    el flujo.
-
-    \item \textbf{Filtro de tokens prohibidos}: existe una lista \texttt{BANNED\_KEY\_TOKENS} con palabras que el modelo confunde
-    a veces con claves del dataset porque forman parte del propio prompt: \texttt{available\_keys}, \texttt{main\_collection\_path},
-    \texttt{examples}, \texttt{fields}, \texttt{pages}, entre otras. Cualquier clave que coincida con esta lista se descarta
-    automáticamente.
-
-    \item \textbf{Detección de valores disfrazados de claves}: la función \texttt{\_looks\_like\_value\_not\_key} detecta los
-    casos en los que el modelo ha introducido un valor concreto del dataset donde debería haber puesto el nombre de un campo.
-    Los patrones detectados incluyen fechas en formato ISO (\texttt{2024-03-15}), URLs completas, rutas con extensiones de imagen,
-    cadenas que son \texttt{null} o \texttt{none}, y strings excesivamente largos con espacios, que claramente corresponden a
-    contenido y no a nombres de campo.
-
-    \item \textbf{Deduplicación}: si el modelo repite la misma clave en varias entradas del array \texttt{fields}, solo se
-    conserva la primera aparición y el resto se descarta. Esto evita que un campo aparezca duplicado en el sitio generado.
-
-    \item \textbf{Fallback}: si tras aplicar todas las validaciones anteriores no queda ninguna clave válida en el schema,
-    el sistema construye automáticamente un schema de emergencia con las doce primeras claves del dataset usando sus nombres
-    originales como etiquetas. Esto garantiza que el flujo nunca se bloquea completamente por un fallo del modelo.
-\end{itemize}
-
-Esta cadena de validaciones es lo que permite que WebBuilder funcione de forma fiable con modelos distintos y de calidades
-diferentes, incluyendo modelos gratuitos con mayor tendencia a desviarse del formato solicitado.
-
-% 4.4.6 Enriquecimiento del prompt del usuario
-\subsection{Enriquecimiento del prompt del usuario}
-\label{subsec:enriquecimiento-prompt}
-El prompt que el usuario escribe en lenguaje natural describe qué tipo de sitio quiere construir, pero raramente menciona los
-campos concretos del dataset. El fichero \texttt{enrich\_prompt.py} implementa la función \texttt{enrich\_user\_prompt}, que
-toma ese prompt original y lo complementa automáticamente con pistas derivadas del análisis del dataset, ayudando al LLM a
-entender qué datos tiene disponibles y cómo podría usarlos. En ningún caso el enriquecedor contradice o sobreescribe las
-instrucciones explícitas del usuario: su papel es añadir contexto, no reemplazar la intención original.
-
-El enriquecedor analiza los campos del schema e intenta clasificarlos semánticamente en varios tipos, cada uno con su conjunto
-de nombres canónicos:
-
-\begin{itemize}
-    \item \textbf{Imágenes}: campos como \texttt{image}, \texttt{photo}, \texttt{thumbnail}, \texttt{avatar}, \texttt{cover}
-    o \texttt{poster}, incluyendo sus equivalentes en español.
-    \item \textbf{Precios}: \texttt{price}, \texttt{cost}, \texttt{amount}, \texttt{fee}, \texttt{salary} y similares.
-    \item \textbf{Fechas}: \texttt{date}, \texttt{created\_at}, \texttt{published}, \texttt{timestamp} y variantes.
-    \item \textbf{Valoraciones}: \texttt{rating}, \texttt{score}, \texttt{stars}, \texttt{votes} y equivalentes.
-    \item \textbf{Categorías}: \texttt{category}, \texttt{type}, \texttt{genre}, \texttt{tag}, \texttt{label}.
-    \item \textbf{Localización}: \texttt{location}, \texttt{city}, \texttt{country}, \texttt{address} y similares.
-    \item \textbf{URLs}: \texttt{url}, \texttt{link}, \texttt{website}, \texttt{href}.
-    \item \textbf{Texto largo}: \texttt{description}, \texttt{content}, \texttt{body}, \texttt{summary}.
-\end{itemize}
-
-La detección se realiza mediante la función \texttt{\_matches}, que divide cada nombre de campo por guiones bajos y comprueba
-si alguna de sus partes coincide con los conjuntos anteriores. Esta estrategia evita falsos positivos: por ejemplo, la palabra
-\texttt{rate} no activaría la detección de valoraciones aunque contenga esa subcadena, porque la comparación se hace sobre
-fragmentos completos tras la división, no por contenido de cadena.
-
-Para cada tipo detectado, se añade al prompt una pista contextual que orienta al modelo sobre cómo podría aprovechar ese campo
-en el sitio generado. El prompt resultante se trunca a un máximo de 1500 caracteres (\texttt{\_MAX\_ENRICHED\_CHARS}) para
-mantener el consumo de tokens bajo control y no penalizar la latencia de la respuesta.
-
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
