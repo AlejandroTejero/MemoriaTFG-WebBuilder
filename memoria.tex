@@ -670,7 +670,7 @@ en el parseo, por lo que no existe en el dataset contruido. Para ello hubo que a
 
 \begin{itemize}
     \item \textbf{Validación contra claves reales}: cada clave propuesta por el LLM se comprueba contra la lista de claves reales extraída del dataset. Si la clave no existe, se intenta un match sin distinguir mayúsculas y minúsculas. Si tampoco hay coincidencia, la clave se descarta silenciosamente.
-    \item \textbf{Filtro de tokens prohibidos}: existe una lista de palabras que el modelo confunde con claves del dataset porque forman parte del propio prompt, como \texttt{available_keys}, \texttt{fields} o \texttt{examples}. Cualquier clave que coincida con esta lista se descarta automáticamente.
+    \item \textbf{Filtro de tokens prohibidos}: existe una lista de palabras que el modelo confunde con claves del dataset porque forman parte del propio prompt, como \texttt{available\_keys}, \texttt{fields} o \texttt{examples}. Cualquier clave que coincida con esta lista se descarta automáticamente.
     \item \textbf{Detección de valores disfrazados de claves}: se detectan los casos en los que el modelo introduce un valor concreto del dataset donde debería haber puesto el nombre de un campo, como fechas en formato ISO, URLs completas o cadenas excesivamente largas.
     \item \textbf{Fallback}: si tras aplicar todas las validaciones no queda ninguna clave válida, el sistema construye automáticamente un schema de emergencia con las primeras claves del dataset, garantizando que el flujo nunca se bloquea por un fallo del modelo.
 \end{itemize}
@@ -748,7 +748,7 @@ La funcion de los fallbacks era sencilla, si el proyecto tenia un fallo grave, e
 \label{subsec:modelo-generatedsite}
 
 El modelo \texttt{GeneratedSite} fue variando durante esta fase para reflejar los nuevos estados del sistema.
-Se añadieron los campos \texttt{project\_files} para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre del proyecto, \texttt{preview\_url} para guardar la URL del sitio desplegado (explicado en la siguiente subseccion Workflow despliegue), y dos nuevos conjuntos de estados. El primero, \texttt{generation_status}, seguía el ciclo de vida de la generación con los valores \texttt{pending}, \texttt{generating}, \texttt{ready} y \texttt{error}. El segundo, \texttt{deploy\_status}, reflejaba el estado del despliegue Docker con los valores \texttt{idle}, \texttt{deploying}, \texttt{done} y \texttt{error}. 
+Se añadieron los campos \texttt{project\_files} para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre del proyecto, \texttt{preview\_url} para guardar la URL del sitio desplegado (explicado en la siguiente subseccion Workflow despliegue), y dos nuevos conjuntos de estados. El primero, \texttt{generation\_status}, seguía el ciclo de vida de la generación con los valores \texttt{pending}, \texttt{generating}, \texttt{ready} y \texttt{error}. El segundo, \texttt{deploy\_status}, reflejaba el estado del despliegue Docker con los valores \texttt{idle}, \texttt{deploying}, \texttt{done} y \texttt{error}. 
 
 Esta separación entre el estado de generación y el estado de despliegue permitía saber con precisión en qué punto del proceso se encontraba cada sitio.
 
@@ -785,7 +785,7 @@ de build del Docker puede tardar unos minutos, y si se ejecutaba desde Django la
 Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django realiza una llamada POST con el nombre del proyecto como parametro y a partir de aqui el workflow se ejecuta siguiendo los siguientes nodos sucesivamente:
 
 \begin{enumerate}
-    \item \textbf{Descomprimir ZIP}: el primer nodo crea el directorio de despliegue en \texttt{/files/deploys/<project_name>} y descomprime el ZIP del proyecto generado en un subdirectorio \texttt{src/}.
+    \item \textbf{Descomprimir ZIP}: el primer nodo crea el directorio de despliegue en \texttt{/files/deploys/<project\_name>} y descomprime el ZIP del proyecto generado en un subdirectorio \texttt{src/}.
     \item \textbf{Restablecer contenedor}: antes de construir la nueva imagen, el workflow intenta detener y eliminar cualquier contenedor anterior con el mismo nombre (\texttt{wb\_<project\_name>}). Si el contenedor no existe, el error se ignora y el flujo continúa sin interrupciones.
     
     \item \textbf{Elegir puerto}: el nodo escanea los puertos actualmente en uso por Docker en el rango 8100--8999 y selecciona el primer puerto libre disponible. Si no hay ningún puerto libre en ese rango, el flujo lanza un error controlado.
@@ -800,6 +800,314 @@ Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django r
 \end{enumerate}
 
 Este diseño garantiza que el usuario siempre recibe una respuesta clara: si el despliegue tiene éxito obtiene la URL del sitio generado, y si falla en cualquier paso Django es notificado con información suficiente para actualizar el estado del sitio a \texttt{error} y mostrar un mensaje al usuario explicando lo ocurrido.
+
+
+\section{Fase 5: Refactor del proyecto y consolidación del generador}
+\label{sec:refactor-consolidacion-generador}
+
+Una vez realizadas las primeras pruebas y añadido muchas trazas para comprobar los diferentes errores surgidos en el proceso de generacion, el codigo del 
+fichero \textbf{project\_generator.py} habia crecido demasiado y se habia convertido en un fichero dificil de depurar, y aprovechando esta momento de refactorizacion se realizaron mas cambios sobre gran parte de codigos del proyecto.
+
+Esta fase se divido en dos partes importantes. En primer lugar a la refactorizacion de partes importantes, como el fichero comentado anteriormente de mucho ficheros html y css, haciendo su uso y modificacion futura mucho mas sencilla al tener todo divido en modulos.
+
+\subsection{Refactor del generador en modulos}
+
+Estos cambios fueron muy importantes, los pasos del generador se realizaban con todo el contenido dentro del mismo fichero, algo que no era de facil escalabilidad a futuro, por lo que el primer cambio fue dividir el \textbf{project\_generator.py} en cuatro ficheros encargados cada uno de una labor
+especifica dentro de \textbf{utils/generator}. Estos ficheros fueron:
+
+\begin{itemize}
+    \item \textbf{\texttt{llm\_wrappers.py}}: Centralizó todas las llamadas al LLM en tres funciones reutilizables. \texttt{llm\_call} para llamadas básicas que devuelven texto, \texttt{llm\_json\_call} para llamadas que esperan JSON como respuesta, y \texttt{llm\_call\_logged} para llamadas que además guardan un registro en base de datos para mejorar la depuracion. Esta ultima funcion fue muy importante en el proceso de generacion y depuracion, anteriormente si algo fallaba no habia forma de saber que habia pasado, pero de esta forma cada vez que se llamaba al LLM durante la generación de un proyecto, además de hacer la llamada normal, guardaba automáticamente en base de datos un registro con toda la información de esa llamada: el paso que se estaba generando, el prompt enviado, la respuesta recibida y si había habido algún error. Ese registro se guarda en \texttt{GenerationLog}
+    
+    \item \textbf{\texttt{fallbacks.py}}: Agrupó todos los fallbacks de emergencia en un único fichero. Cada función de este módulo generaba una versión mínima pero funcional de un artefacto concreto del proyecto: páginas, modelos, vistas o templates. Al tenerlos centralizados resultaba mucho más sencillo mejorarlos o ajustarlos sin tocar el orquestador principal.
+    
+    \item \textbf{\texttt{static\_files.py}}: Extrajo toda la generación de ficheros de infraestructura que no dependen del LLM: \texttt{manage.py}, \texttt{settings.py}, \texttt{wsgi.py}, \texttt{urls.py}, \texttt{Dockerfile}, \texttt{entrypoint.sh} y \texttt{requirements.txt}. El orquestador principal quedó así mucho más limpio, delegando en este módulo la construcción del scaffolding fijo.
+    
+    \item \textbf{\texttt{migrations\_generator.py}}: Aisló la lógica de generación automática de la migración inicial, que parseaba el \texttt{models.py} producido por el LLM y construía el fichero \texttt{0001\_initial.py} correspondiente.
+\end{itemize}
+
+
+\subsection{Refactor de templates y ficheros de estilos}
+\label{subsec:refactor-templates-estilos}
+
+La misma causa que creo la decision del refactor del generador ocurrio con los ficheros de presentacion del proyecto (HTML, CSS y JavaScript).
+Hasta el momento los templates HTML eran ficheros que incluian todas las secciones en un unico bloque, al igual que ocurria con los ficheros CSS y JavaScript. Como comentaba anteriormente, esta fase introdujo una reorganizacion completa de la interfaz con la separacion de responsabilidades.
+
+En cuanto a los templates se creo un nuevo modulo \textbf{partials}, encargado de contener los fragmentos que representan una seccion concreta de cada pagina. Cada fichero principal paso a contener sus partials, incluyendose mediante la etiqueta \textbf{include} de Django.
+
+La home del proyecto, que hasta entonces era el fichero mas complejo, se dividió en seis partials independientes dentro de \texttt{templates/WebBuilder/partials/home}, quedando asi la nueva estructura:
+
+\begin{itemize}
+    \item \texttt{hero.html} — la sección principal de bienvenida
+    \item \texttt{examples.html} — ejemplos de sitios generados
+    \item \texttt{how.html} — explicación del funcionamiento
+    \item \texttt{llms.html} — sección de modelos de lenguaje compatibles
+    \item \texttt{metrics.html} — métricas públicas del sistema
+    \item \texttt{cta.html} — botón de acceso a la aplicación
+\end{itemize}
+
+El asistente se dividió en tres partials dentro de \texttt{templates/WebBuilder/partials/assistant/}:
+
+\begin{itemize}
+    \item \texttt{input.html} — formulario del paso 1, donde el usuario 
+    introduce la URL de la API o sube un fichero local para su análisis
+    \item \texttt{analysis.html} — resultado del paso 2, que muestra las 
+    estadísticas del dataset analizado: número de items encontrados, campos 
+    disponibles y ruta de la colección principal
+    \item \texttt{preview.html} — resultado del paso 3, donde se muestra 
+    el schema propuesto por la IA y el usuario puede revisarlo y aprobarlo 
+    antes de continuar
+\end{itemize}
+
+El historial se dividió en dos partials dentro de \texttt{templates/WebBuilder/partials/history/}:
+
+\begin{itemize}
+    \item \texttt{published\_sites.html} — listado de sitios ya generados 
+    y desplegados por el usuario
+    \item \texttt{recent\_analysis.html} — listado de análisis recientes 
+    realizados por el usuario
+\end{itemize}
+
+Los ficheros estáticos sufrieron una reorganización equivalente. 
+El CSS pasó a estar organizado por página y por sección dentro de 
+\texttt{static/css/}:
+
+\begin{itemize}
+    \item \texttt{home/hero.css} — estilos de la sección principal de bienvenida
+    \item \texttt{home/examples.css} — estilos de la sección de ejemplos
+    \item \texttt{home/how.css} — estilos de la sección de funcionamiento
+    \item \texttt{home/llms.css} — estilos de la sección de modelos compatibles
+    \item \texttt{home/metrics.css} — estilos de la sección de métricas públicas
+    \item \texttt{home/cta.css} — estilos de la sección de acceso a la aplicación
+    \item \texttt{assistant.css} — estilos del asistente de generación
+    \item \texttt{history.css} — estilos del historial del usuario
+    \item \texttt{edit.css} — estilos de la página de edición del schema
+    \item \texttt{login.css} — estilos de las páginas de login y registro
+    \item \texttt{navbar.css} — estilos de la barra de navegación
+    \item \texttt{backgrounds.css} — fondos y efectos visuales compartidos
+\end{itemize}
+
+El JavaScript siguió el mismo criterio con ficheros independientes 
+por página en \texttt{static/js/}:
+
+\begin{itemize}
+    \item \texttt{home.js} — lógica interactiva de la home
+    \item \texttt{assistant.js} — lógica del flujo del asistente
+    \item \texttt{edit.js} — lógica de la edición del schema
+    \item \texttt{site\_render.js} — lógica de la vista previa del sitio generado
+\end{itemize}
+
+El \texttt{base.html} se actualizó para cargar las fuentes de Google Fonts 
+necesarias para el nuevo diseño: Inter para el texto general, 
+y Geist y Geist Mono para elementos de código y datos técnicos.
+
+Esta reorganización, aunque invisible para el usuario final, facilitó enormemente el mantenimiento y la evolución de la interfaz en los sprints siguientes, ya que cualquier cambio en una sección concreta de una página solo requería tocar un fichero pequeño y bien delimitado.
+
+
+\subsection{Enriquecimiento de prompts}
+\label{subsec:enriquecimiento-prompts}
+
+Tras unas cuantas pruebas, llegue a la conclusion de un problema importante, podria ocurrir que un usuario no familiarizado con los prompts de IA no supiese como hacerlo adecuadamente, o que incluso lo dejase vacio. Para resolver este problema se creo el fichero \texttt{utils/llm/enrich\_prompts.py}, 
+encargado de analizar automaticamente los campos del dataset antes de construir el prompt y añadir contenido personalizado.
+Si el dataset tenia campos con imagenes se le indica al modelo que las usara de forma destacada. Si tenia precios, que los resalte visualmente. Si tenia
+fechas que las mostrara de forma clara. De esta forma se garantiza que el LLM siempre recibiera suficiente contexto para tomar decisiones razonadas.
+De todos modos si algo no estuviese en la mente del usuario, en el siguiente paso de editar el schema podria modificarlo añadiendo los campos necesarios o modificando los existentes.
+
+
+\subsection{Trazabilidad: GenerationLog}
+\label{subsec:trazabilidad-generationlog}
+
+Anteriormente en las generaciones si algo fallaba no había forma de saber qué prompt se había enviado exactamente, qué había respondido el modelo ni si había habido reintentos. Para arreglar esto se creo el modelo \textbf{GeneratioLog}, vinculado mediante una clave a su correspodiente \textbf{GenerationSite}. 
+
+Cada llamada al LLM durante la generación de un proyecto producía un registro que almacenaba el paso concreto que se estaba generando, el modelo de LLM utilizado, el prompt de sistema y el prompt de usuario enviados, la respuesta en crudo devuelta por el modelo, los errores de consistencia detectados y si la llamada había necesitado un reintento. Esto permitía analizar a posteriori qué pasos fallaban con más frecuencia, qué modelos producían mejores resultados y qué tipos de datasets generaban más inconsistencias.
+
+
+\subsection{Verificacion de consistencia}
+\label{subsec:verificacion-consistencia}
+
+Otro problema frecuente era que el LLM no tenia suficiente contexto entre ficheros, principal causa de las alucionaciones del LLM. Ocurria lo siguiente:
+se definia un campo con un nombre en \textbf{models.py} y luego en los demas ficheros se referenciaba con ligeros cambios, provocando errores de ejecuccion.
+Para detectar estos casos antes de que el usuario desplegase el proyecto, se implemento el fichero \texttt{utils/llm/consistency\_checker.py}.
+
+Este fichero extraía mediante expresiones regulares los campos definidos en \texttt{models.py} y buscaba en los demas templates las referencias a esos campos. Cualquier referencia encontrada diferente que no correspondiera al campo real del modelo, se registraba como error de consistencia. 
+Estos errores se guardaban en el campo \texttt{consistency\_error} del modelo \texttt{GenerationLog} correspondiente, permitiendo identificar que pasos producian mas incosistenccias y como se producian, para el consiguiente arreglo a futuro.
+
+
+\subsection{Panel de métricas}
+\label{subsec:panel-metricas}
+
+Para tener un uso mas sencillo y accesible del contenido de GenerationLog añadi una vista de metricas en \textbf{views/metrics.py}, accesible unicamente para usuarios con permisos de administrador. El objetivo de esta vista era tener visibilidad real sobre el comportamiento del generador, los fallos mas recurrentes, que modelos eran mas optimos para cada tipo de pagina, etc.
+
+El panel mostraba las siguientes estadísticas agregadas:
+
+\begin{itemize}
+    \item \textbf{Resumen general}: número total de registros en \texttt{GenerationLog}, sitios generados y análisis realizados hasta la fecha.
+    \item \textbf{Desglose por paso}: para cada uno de los siete pasos del generador, se mostraba el número de llamadas realizadas, cuántas habían necesitado reintento y la tasa de reintento resultante. Esto permitía identificar qué pasos eran más problemáticos y priorizar las mejoras.
+    \item \textbf{Distribución por modelo}: agrupación de las llamadas por modelo de LLM utilizado, lo que facilitaba comparar el rendimiento de distintos proveedores cuando se probaban configuraciones diferentes.
+\end{itemize}
+
+Esta informacion resulto util para mejorar las siguientes fases donde cambios minimos producirian grandes resultados.
+
+
+\section{Fase 6: Funcionalidades avanzadas}
+\label{sec:funcionalidades-avanzadas}
+
+Una vez concluida una buena base del sistema de generacion y despliegue, esta fase se dedico a implementar funcionalidades que ampliaban las capacidades del sistema en tres direcciones: historial, ingestion de datos y LLM personalizado
+
+En primer lugar, se añadieron nuevos modelos para cubrir las necesidades que tenia el historial, se crearon \texttt{SiteVersion}, para mantener 
+un historial completo de todas las versiones de ficheros de cada sitio generado y poder recuperar cualquier estado anterior, y \texttt{SiteUser}, 
+para gestionar los usuarios internos de cada proyecto Django generado directamente desde WebBuilder, pudiendo asi introducir usuarios o superusuarios.
+
+En segundo lugar, el módulo de ingestión se amplió para soportar dos nuevos formatos de entrada muy habituales en APIs de datos abiertos: CSV y GeoJSON. Detectados de forma automatica como ocurria con XML y JSON. Normalizando los datos a una lista de diccionarios (\texttt{list[dict]}) como ocurria con los anteriores tipos, para su posterior uso.
+
+
+Por último, se implementó el modelo \texttt{UserProfile}, que permite a cada usuario configurar su LLM local, con su propia API key cifrada, eliminando la dependencia de seleccion cerrada de LLMs y abriendo el sistema a cualquier modelo compatible con el estándar OpenAI.
+
+\subsection{Nuevos formatos de entrada: CSV y GeoJSON}
+\label{subsec:nuevos-formatos-entrada}
+
+Hasta este momento el modulo de ingestion solo soportaba JSON y XML. En esta fase se ampliaron los formatos añadiendo soporte para CSV y GeoJSON, que son dos de los formatos mas habituales en APIs publicas.
+
+La deteccion del formato se añadio en el archivo existente \textbf{utils/ingest/parsers.py}. 
+
+El formato GeoJSON se detectaba antes que el formato JSON, ya que es un formato mas restrictivo. Se realiza inspeccionando el campo \texttt{type} del objeto raíz: si era \texttt{FeatureCollection}, el fichero se procesaba como GeoJSON. Mientras que para el formato CSV se inspeccionaba la primera linea en busca de separadores de coma, o punto y coma, habituales en este tipo de ficheros.
+
+El parseo de cada formato tenía su propia función:
+
+\begin{itemize}
+    \item \textbf{CSV}: se utilizó la librería estándar \texttt{csv} de Python con detección automática del dialecto mediante \texttt{csv.Sniffer}. La lectura se limitaba a 2000 filas para evitar problemas de memoria con ficheros muy grandes.
+    \item \textbf{GeoJSON}: cada \texttt{Feature} del \texttt{FeatureCollection} se aplanaba extrayendo sus propiedades como un diccionario plano, añadiendo además el tipo de geometría como campo \texttt{geometry\_type}. De esta forma el resto del sistema podía tratar el resultado igual que cualquier otro JSON.
+\end{itemize}
+
+\subsection{Ejemplos few-shot por tipo de sitio}
+\label{subsec:ejemplos-fewshot}
+
+Otro problema detectado en las generaciones era que los templates HTML producidos por el LLM tendían a ser genéricos y con poco estilo visual. Para mejorar la calidad del código generado se introdujo la carpeta \texttt{utils/llm/examples/}, con ejemplos de templates HTML reales por tipo de sitio: \texttt{blog.py}, \texttt{catalog.py}, \texttt{dashboard.py} y \texttt{portfolio.py}. Estos ejemplos se incluían en el prompt del paso 5 del generador como referencia de estilo, siguiendo la técnica de \emph{few-shot prompting}~\cite{openai_prompt_engineering}, que consiste en proporcionar al modelo ejemplos concretos del resultado esperado para que los imite en lugar de inventar una solución desde cero. El resultado fue una mejora notable en la calidad visual y estructural de los templates generados.
+
+
+\subsection{Versionado de proyectos generados}
+\label{subsec:versionado-paginas}
+
+Hasta este momento, generar o editar una API existente en el historial, causaba que los ficheros existentes se sobreescribieran, de esta forma era imposible tener un control de versiones o recurrir a una prueba anterior que fuese mejor. Para solucionar esto se creo el modelo \textbf{SiteVersion}, enlazado mediante una clave foranea a \textbf{GeneratedSite}. Cada version estaba nombrada con un numero incremental, y almacenaba una copia completa de los ficheros, una etiqueta descriptiva opcional y la fecha de creacion dle proyecto. Las versiones estaban ordenadas de forma mas reciente a mas antigua, permitiendo asi al usuario consultar un historial funcional y la posibilidad de recuperar cualquier version anterior.
+
+\subsection{Usuarios del proyecto}
+\label{subsec:usuarios-proyecto}
+
+Cada sitio Django generado incluia su propio sistema de autenticacion, son paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creo el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}. Cada usuario del sitio tenia su nombre, una contraseña y un rol. Este ultimo campo podria ser \texttt{super} para la creacion de un superusuario con acceso al panel de administracion Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinacion de proyecto y nombre de usuario era unica, evitando asi duplicados dentro del mismo proyecto.
+
+\subsection{LLM local y catalogo de modelos disponibles}
+\label{subsec:llm-local-catalogo-modelos}
+
+Hasta este momento el modelo de LLM utilizado para generar páginas era fijo, configurado en el fichero \textbf{.env} del servidor, sin que el usuario pudiera cambiarlo. En esta fase se implementaron dos cambios importantes respecto a esto.
+
+En primer lugar, se creó el fichero \texttt{utils/llm/llm\_catalog.py}, que definía un catálogo de modelos conocidos y recomendados. Cada entrada del catálogo incluía el identificador del modelo, su nombre legible, el proveedor, la URL base del API, una descripción y una lista de ventajas e inconvenientes. En este sprint el catálogo incluía tres modelos:
+
+\begin{itemize}
+    \item \textbf{Llama 4 Scout} (Groq) — modelo rápido y eficiente, recomendado para generaciones ágiles con buena calidad de código
+    \item \textbf{Llama 3.3 70B} (OpenRouter) — modelo más potente, recomendado para webs complejas que requieren mayor capacidad de razonamiento
+    \item \textbf{Qwen3 Coder} (OpenRouter) — modelo especializado en código, especialmente bueno generando HTML y CSS limpio
+\end{itemize}
+
+
+En segundo lugar, se implementó un selector de modelo completo, accesible desde el inicio del proceso, justo antes de analizar la URL. El selector ofrecía tres modos de uso:
+
+\begin{itemize}
+    \item \textbf{Predeterminado}: el sistema selecciona automáticamente el 
+    modelo más adecuado según el dataset analizado, buscando el equilibrio 
+    óptimo entre velocidad y calidad. Es la opción recomendada para la 
+    mayoría de casos.
+    
+    \item \textbf{Elegir modelo}: despliega el catálogo de modelos disponibles 
+    definido en \texttt{utils/llm/llm\_catalog.py}, mostrando para cada modelo 
+    su nombre, proveedor, descripción y sus ventajas e inconvenientes.
+    
+    \item \textbf{Modelo personalizado}: utiliza el LLM configurado por el 
+    usuario en su perfil. Si el usuario no tiene ninguno configurado, esta 
+    opción aparece deshabilitada.
+\end{itemize}
+
+El catálogo cubría los casos más habituales, pero existía la necesidad de 
+permitir que cualquier usuario pudiera conectar su propio proveedor de LLM, 
+ya fuera uno privado, uno de pago con mejores capacidades o simplemente uno 
+diferente a los disponibles en el catálogo. Para soportar esto se creó el 
+modelo \texttt{UserProfile}, vinculado en relación \texttt{OneToOne} con el 
+usuario de Django. El modelo almacenaba tres campos opcionales:
+
+\begin{itemize}
+    \item \textbf{URL base del proveedor} (\texttt{custom\_llm\_base\_url}): 
+    dirección del endpoint del proveedor OpenAI-compatible, por ejemplo 
+    \texttt{https://api.groq.com/openai/v1} para Groq o 
+    \texttt{https://openrouter.ai/api/v1} para OpenRouter.
+    
+    \item \textbf{Identificador del modelo} (\texttt{custom\_llm\_model}): 
+    nombre exacto del modelo tal y como lo espera el proveedor, por ejemplo 
+    \texttt{meta-llama/llama-3.3-70b-instruct:free}.
+    
+    \item \textbf{API key} (\texttt{custom\_llm\_api\_key}): clave de acceso 
+    al proveedor, cifrada en base de datos mediante \texttt{EncryptedCharField} 
+    para que nunca se almacene en texto plano.
+\end{itemize}
+
+
+\section{Fase 7: Pulido y cierre}
+\label{sec:pulido-cierre}
+
+Esta ultima fase se dedico a pulir el sistema en todos sus puntos debiles, las cuales eran: mejorar la calidad visual de los sitios generados, consolidar la infraestructura de produccion y completar los workflows de n8n que quedaban pendientes. Con infraestructura de produccion me refiero a los cambios que hacen que el proyecto sea util fuera del entorno de desarrollo, como por ejemplo la migracion de la base de datos SQLite a una real de desarrollo como es PostgreSQL para soportar accesos concurrentes de multiples usuarios, la gestion automatica de contenedores Docker activos o la monitorizacion diaria del sistema mediante. Es decir, no se añadieron funcionalidades realmente nuevas, sino que se mejoraron las existentes a un nivel de entrega de proyecto.
+
+
+\subsection{Sistema de presets visuales}
+\label{subsec:sistema-presets-visuales}
+
+Uno de los principales problema durante todo el desarrollo fue que los proyectos tendian a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se cero el modulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
+
+Este primer archivo \textbf{presets} (definicion: configuracion predefinida) define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en esta fase son:
+
+\begin{itemize}
+    \item \textbf{Neo Terminal}: estética cyberpunk con fondo casi negro y acento neón ácido. Layout denso orientado a escaneo rápido de información. Activado por palabras como \emph{terminal}, \emph{dark}, \emph{gaming} o \emph{futurista}.
+    \item \textbf{Bento Pop}: rejilla asimétrica con bloques de colores vivos e ilustrativos. Activado por palabras como \emph{bento}, \emph{mosaico} o \emph{asimétrico}.
+    \item \textbf{Quiet Editorial}: tipografía protagonista, márgenes amplios y estética de revista cultural sobria. Preset por defecto para sitios de tipo blog.
+    \item \textbf{Magazine Split}: portada con gran imagen dividida y tipografía impactante. Preset por defecto para catálogos.
+    \item \textbf{Glass Orbit}: estética glassmorphism con fondos oscuros y elementos traslúcidos. Preset por defecto para portfolios.
+\end{itemize} 
+
+Cada tipo de sitio tiene asignado un preset por defecto que se aplica cuando el prompt del usuario no contiene ningun estilo descrito, garantizando que el resultado siempre tenga una identidad visual coherente con el tipo de contenido.
+
+El fichero \textbf{}{snippets.py} complementa los presets con fragmentos de HTML concretos y válidos para cada estilo: cards, heros y filas de listado con las clases Tailwind exactas que corresponden a cada preset. Estos snippets se incluyen en los prompts de generación de templates como ejemplos de referencia visual, asegurando que el LLM produzca código coherente con el estilo elegido.
+
+El fichero \textbf{}{theme\_rules.py} centraliza tokens visuales reutilizables como clases base para contenedores, cards, botones, badges y tipografía, junto con reglas críticas de uso de color para evitar que el LLM genere clases Tailwind inválidas, como \texttt{bg-#111111} en lugar de la sintaxis correcta \texttt{bg-[#111111]}.
+
+\subsection{Migración a PostgreSQL}
+\label{subsec:migracion-postgresql}
+
+Durante todo el desarrollo, WebBuilder había utilizado SQLite como base de datos, lo cual era suficiente para el entorno de desarrollo pero inadecuado para producción. En este sprint se realizó la migración a PostgreSQL, que ofrece mayor robustez, soporte para accesos concurrentes y mejor rendimiento con volúmenes de datos crecientes. Teniendo acceso a la configuracion y vista de la base de datos desde \textbf{http://localhost/pgadmin4}
+
+La configuración en \texttt{settings.py} se actualizó para leer los parámetros de conexión desde variables de entorno: nombre de la base de datos (\texttt{DB\_NAME}), usuario (\texttt{DB\_USER}), contraseña (\texttt{DB\_PASSWORD}), host (\texttt{DB\_HOST}) y puerto (\texttt{DB\_PORT}, por defecto \texttt{5432}). La configuración anterior de SQLite se migro a la nueva base de datos, teniendo los logs y metricas anteriores.
+
+
+\subsection{Workflow generation-done}
+\label{subsec:workflow-generation-done}
+
+Con la base de notificaciones ya preparada desde el fichero \texttt{utils/generator/notifications.py}, se implementó el workflow de n8n \emph{generation-done}. Este workflow se activa mediante un webhook al que Django llama en cuanto termina la generación de un sitio, enviando un payload con los datos relevantes: email y nombre del usuario, título y tipo del sitio generado, URL de la API original, URL del preview si ya está desplegado, URL de descarga del ZIP, número de campos e items procesados, duración de la generación en segundos y modelo de LLM utilizado.
+n8n recibe este payload y envía automáticamente un correo de notificación al usuario informándole de que su sitio está listo. La llamada al webhook se realizó de forma completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente mediante un bloque \texttt{try/except} y la generación continuaba con normalidad.
+
+
+\subsection{Workflow health-check}
+\label{subsec:workflow-health-check}
+
+El workflow de \emph{health-check} se configuró para ejecutarse automáticamente cada día mediante un nodo \emph{Schedule Trigger} de n8n. Su función es verificar que el sistema sigue operativo realizando una petición HTTP a la URL principal de WebBuilder y comprobando que la respuesta es correcta. Si la verificación falla, n8n envía una alerta por correo al administrador del sistema con información sobre el error detectado. Este workflow fue especialmente útil durante las últimas fases de desarrollo para detectar caídas del servidor sin necesidad de monitorización manual.
+
+
+\subsection{Workflow auto-shutdown}
+\label{subsec:workflow-auto-shutdown}
+
+El workflow de \emph{auto-shutdown} resolvió un problema operativo importante: los contenedores Docker de los sitios generados permanecían activos indefinidamente aunque nadie los estuviera usando, consumiendo recursos del servidor. Este workflow se ejecuta de forma programada cada hora, consulta la lista de contenedores activos con el prefijo \texttt{wb\_} y detiene aquellos que llevan inactivos más de un tiempo configurable. Esto permite mantener el servidor limpio y los recursos disponibles para nuevas generaciones sin intervención manual.
+
+
+\subsection{Mejora del workflow de despliegue}
+\label{subsec:mejora-workflow-despliegue}
+
+El workflow de despliegue que se había construido en el Sprint 4 carecía de un mecanismo centralizado de gestión de errores. Si cualquiera de los nodos fallaba, la petición de Django quedaba sin respuesta. En este sprint se añadió el nodo \textbf{Responder Error}, que actúa como rama de error compartida para todos los nodos del workflow. Cuando cualquier paso falla, este nodo captura el error y devuelve a Django una respuesta JSON estructurada con el código HTTP 500, un mensaje descriptivo del error y el paso en el que ocurrió. Esto permite que Django actualice el estado del sitio a \texttt{error} y muestre un mensaje útil al usuario en lugar de dejar la operación colgada indefinidamente.
+
+
 
 
 % Fin diseño e implementacion
