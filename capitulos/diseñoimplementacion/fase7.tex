@@ -1,0 +1,64 @@
+\section{Fase 7: Pulido y cierre}
+\label{sec:pulido-cierre}
+
+Esta ultima fase se dedico a pulir el sistema en todos sus puntos débiles, que eran: mejorar la calidad visual de los sitios generados, consolidar la infraestructura de produccion y completar los workflows de n8n que quedaban pendientes. Con infraestructura de produccion me refiero a los cambios que hacen que el proyecto sea util fuera del entorno de desarrollo, como por ejemplo la migración a una base de datos más robusta como PostgreSQL para soportar accesos concurrentes de multiples usuarios, la gestión automática de contenedores Docker activos o la monitorización diaria del sistema. Es decir, no se añadieron funcionalidades realmente nuevas, sino que se llevaron las existentes a un nivel de madurez adecuado para la entrega.
+
+
+\subsection{Sistema de presets visuales}
+\label{subsec:sistema-presets-visuales}
+
+Uno de los principales problema durante todo el desarrollo fue que los proyectos tendian a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
+
+El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en esta fase son:
+
+\begin{itemize}
+    \item \textbf{Neo Terminal}: estética cyberpunk con fondo casi negro y acento neón ácido. Layout denso orientado a escaneo rápido de información. Activado por palabras como \emph{terminal}, \emph{dark}, \emph{gaming} o \emph{futurista}.
+    \item \textbf{Bento Pop}: rejilla asimétrica con bloques de colores vivos e ilustrativos. Activado por palabras como \emph{bento}, \emph{mosaico} o \emph{asimétrico}.
+    \item \textbf{Quiet Editorial}: tipografía protagonista, márgenes amplios y estética de revista cultural sobria. Preset por defecto para sitios de tipo blog.
+    \item \textbf{Magazine Split}: portada con gran imagen dividida y tipografía impactante. Preset por defecto para catálogos.
+    \item \textbf{Glass Orbit}: estética glassmorphism con fondos oscuros y elementos traslúcidos. Preset por defecto para portfolios.
+\end{itemize} 
+
+Cada tipo de sitio tiene asignado un preset por defecto que se aplica cuando el prompt del usuario no contiene ningun estilo descrito, garantizando que el resultado siempre tenga una identidad visual coherente con el tipo de contenido.
+
+El fichero \texttt{snippets.py} complementa los presets con fragmentos de HTML concretos y válidos para cada estilo: cards, heros y filas de listado con las clases Tailwind exactas que corresponden a cada preset. Estos snippets se incluyen en los prompts de generación de templates como ejemplos de referencia visual, asegurando que el LLM produzca código coherente con el estilo elegido.
+
+El fichero \texttt{theme\_rules.py} centraliza tokens visuales reutilizables como clases base para contenedores, cards, botones, badges y tipografía, junto con reglas críticas de uso de color para evitar que el LLM genere clases Tailwind inválidas, como \texttt{bg-\#111111} en lugar de la sintaxis correcta \texttt{bg-[\#111111]}.
+
+\subsection{Migración a PostgreSQL}
+\label{subsec:migracion-postgresql}
+
+Durante todo el desarrollo, WebBuilder había utilizado SQLite como base de datos, lo cual era suficiente para el entorno de desarrollo pero inadecuado para producción. En este sprint se realizó la migración a PostgreSQL, que ofrece mayor robustez, soporte para accesos concurrentes y mejor rendimiento con volúmenes de datos crecientes.
+
+La configuración en \texttt{settings.py} se actualizó para leer los parámetros de conexión desde variables de entorno: nombre de la base de datos (\texttt{DB\_NAME}), usuario (\texttt{DB\_USER}), contraseña (\texttt{DB\_PASSWORD}), host (\texttt{DB\_HOST}) y puerto (\texttt{DB\_PORT}, por defecto \texttt{5432}). La configuración anterior de SQLite se migró a la nueva base de datos, teniendo los logs y métricas anteriores.
+
+
+\subsection{Workflow generation-done}
+\label{subsec:workflow-generation-done}
+
+Con la base de notificaciones ya preparada desde el fichero \\ \texttt{utils/generator/notifications.py}, se implementó el workflow de n8n \emph{generation-done}. Este workflow se activa mediante un webhook al que Django llama en cuanto termina la generación de un sitio, enviando un payload con los datos relevantes: email y nombre del usuario, título y tipo del sitio generado, URL de la API original, URL del preview si ya está desplegado, URL de descarga del ZIP, número de campos e items procesados, duración de la generación en segundos y modelo de LLM utilizado.
+n8n recibe este payload y envía automáticamente un correo de notificación al usuario informándole de que su sitio está listo. La llamada al webhook se realizó de forma completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente mediante un bloque \texttt{try/except} y la generación continuaba con normalidad.
+
+
+\subsection{Workflow health-check}
+\label{subsec:workflow-health-check}
+
+El workflow de \emph{health-check} se configuró para ejecutarse automáticamente cada día mediante un nodo \emph{Schedule Trigger} de n8n. Su función es verificar que el sistema sigue operativo realizando una petición HTTP a la URL principal de WebBuilder y comprobando que la respuesta es correcta. Si la verificación falla, n8n envía una alerta por correo al administrador del sistema con información sobre el error detectado. Este workflow fue especialmente útil durante las últimas fases de desarrollo para detectar caídas del servidor sin necesidad de monitorización manual.
+
+
+\subsection{Workflow auto-shutdown}
+\label{subsec:workflow-auto-shutdown}
+
+El workflow de \emph{auto-shutdown} resolvió un problema operativo importante: los contenedores Docker de los sitios generados permanecían activos indefinidamente aunque nadie los estuviera usando, consumiendo recursos del servidor. Este workflow se ejecuta de forma programada cada hora, consulta la lista de contenedores activos con el prefijo \texttt{wb\_} y detiene aquellos que llevan inactivos más de un tiempo configurable. Esto permite mantener el servidor limpio y los recursos disponibles para nuevas generaciones sin intervención manual.
+
+
+\subsection{Mejora del workflow de despliegue}
+\label{subsec:mejora-workflow-despliegue}
+
+El workflow de despliegue que se había construido en el Sprint 4 carecía de un mecanismo centralizado de gestión de errores. Si cualquiera de los nodos fallaba, la petición de Django quedaba sin respuesta. En este sprint se añadió el nodo \textbf{Responder Error}, que actúa como rama de error compartida para todos los nodos del workflow. Cuando cualquier paso falla, este nodo captura el error y devuelve a Django una respuesta JSON estructurada con el código HTTP 500, un mensaje descriptivo del error y el paso en el que ocurrió. Esto permite que Django actualice el estado del sitio a \texttt{error} y muestre un mensaje útil al usuario en lugar de dejar la operación colgada indefinidamente.
+
+
+% Fin diseño e implementacion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

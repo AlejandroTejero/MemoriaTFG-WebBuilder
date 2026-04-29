@@ -1,0 +1,100 @@
+\section{Fase 6: Funcionalidades avanzadas}
+\label{sec:funcionalidades-avanzadas}
+
+Una vez concluida una buena base del sistema de generacion y despliegue, esta fase se dedico a implementar funcionalidades que ampliaban las capacidades del sistema en tres direcciones: historial, ingestion de datos y LLM personalizado
+
+En primer lugar, se añadieron nuevos modelos para cubrir las necesidades que tenia el historial, se crearon \texttt{SiteVersion}, para mantener 
+un historial completo de todas las versiones de ficheros de cada sitio generado y poder recuperar cualquier estado anterior, y \texttt{SiteUser}, 
+para gestionar los usuarios internos de cada proyecto Django generado directamente desde WebBuilder, pudiendo asi introducir usuarios o superusuarios.
+
+En segundo lugar, el módulo de ingestión se amplió para soportar dos nuevos formatos de entrada muy habituales en APIs de datos abiertos: CSV y GeoJSON. Detectados de forma automatica como ocurria con XML y JSON. Normalizando los datos a una lista de diccionarios (\texttt{list[dict]}) como ocurria con los anteriores tipos, para su posterior uso.
+
+
+Por último, se implementó el modelo \texttt{UserProfile}, que permite a cada usuario configurar su LLM local, con su propia API key cifrada, eliminando la dependencia de seleccion cerrada de LLMs y abriendo el sistema a cualquier modelo compatible con el estándar OpenAI.
+
+\subsection{Nuevos formatos de entrada: CSV y GeoJSON}
+\label{subsec:nuevos-formatos-entrada}
+
+Hasta este momento el modulo de ingestion solo soportaba JSON y XML. En esta fase se ampliaron los formatos añadiendo soporte para CSV y GeoJSON, que son dos de los formatos mas habituales en APIs publicas.
+
+La deteccion del formato se añadio en el archivo existente \textbf{utils/ingest/parsers.py}. 
+
+El formato GeoJSON se detectaba antes que el formato JSON, ya que es un formato mas restrictivo. Se realiza inspeccionando el campo \texttt{type} del objeto raíz: si era \texttt{FeatureCollection}, el fichero se procesaba como GeoJSON. Mientras que para el formato CSV se inspeccionaba la primera linea en busca de separadores de coma, o punto y coma, habituales en este tipo de ficheros.
+
+El parseo de cada formato tenía su propia función:
+
+\begin{itemize}
+    \item \textbf{CSV}: se utilizó la librería estándar \texttt{csv} de Python con detección automática del dialecto mediante \texttt{csv.Sniffer}. La lectura se limitaba a 2000 filas para evitar problemas de memoria con ficheros muy grandes.
+    \item \textbf{GeoJSON}: cada \texttt{Feature} del \texttt{FeatureCollection} se aplanaba extrayendo sus propiedades como un diccionario plano, añadiendo además el tipo de geometría como campo \texttt{geometry\_type}. De esta forma el resto del sistema podía tratar el resultado igual que cualquier otro JSON.
+\end{itemize}
+
+\subsection{Ejemplos few-shot por tipo de sitio}
+\label{subsec:ejemplos-fewshot}
+
+Otro problema detectado en las generaciones era que los templates HTML producidos por el LLM tendían a ser genéricos y con poco estilo visual. Para mejorar la calidad del código generado se introdujo la carpeta \texttt{utils/llm/examples/}, con ejemplos de templates HTML reales por tipo de sitio: \texttt{blog.py}, \texttt{catalog.py}, \texttt{dashboard.py} y \texttt{portfolio.py}. Estos ejemplos se incluían en el prompt del paso 5 del generador como referencia de estilo, siguiendo la técnica de \emph{few-shot prompting}~\cite{openai_prompt_engineering}, que consiste en proporcionar al modelo ejemplos concretos del resultado esperado para que los imite en lugar de inventar una solución desde cero. El resultado fue una mejora notable en la calidad visual y estructural de los templates generados.
+
+
+\subsection{Versionado de proyectos generados}
+\label{subsec:versionado-paginas}
+
+Hasta este momento, generar o editar una API existente en el historial, causaba que los ficheros existentes se sobreescribieran, de esta forma era imposible tener un control de versiones o recurrir a una prueba anterior que fuese mejor. Para solucionar esto se creo el modelo \textbf{SiteVersion}, enlazado mediante una clave foranea a \textbf{GeneratedSite}. Cada version estaba nombrada con un numero incremental, y almacenaba una copia completa de los ficheros, una etiqueta descriptiva opcional y la fecha de creacion del proyecto. Las versiones estaban ordenadas de forma mas reciente a mas antigua, permitiendo asi al usuario consultar un historial funcional y la posibilidad de recuperar cualquier version anterior.
+
+\subsection{Usuarios del proyecto}
+\label{subsec:usuarios-proyecto}
+
+Cada sitio Django generado incluia su propio sistema de autenticacion, son paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creo el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}. Cada usuario del sitio tenia su nombre, una contraseña y un rol. Este ultimo campo podria ser \texttt{super} para la creacion de un superusuario con acceso al panel de administracion Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinacion de proyecto y nombre de usuario era unica, evitando asi duplicados dentro del mismo proyecto.
+
+\subsection{LLM local y catalogo de modelos disponibles}
+\label{subsec:llm-local-catalogo-modelos}
+
+Hasta este momento el modelo de LLM utilizado para generar páginas era fijo, configurado en el fichero \textbf{.env} del servidor, sin que el usuario pudiera cambiarlo. En esta fase se implementaron dos cambios importantes respecto a esto.
+
+En primer lugar, se creó el fichero \texttt{utils/llm/llm\_catalog.py}, que definía un catálogo de modelos conocidos y recomendados. Cada entrada del catálogo incluía el identificador del modelo, su nombre legible, el proveedor, la URL base del API, una descripción y una lista de ventajas e inconvenientes. En este sprint el catálogo incluía tres modelos:
+
+\begin{itemize}
+    \item \textbf{Llama 4 Scout} (Groq) — modelo rápido y eficiente, recomendado para generaciones ágiles con buena calidad de código
+    \item \textbf{Llama 3.3 70B} (OpenRouter) — modelo más potente, recomendado para webs complejas que requieren mayor capacidad de razonamiento
+    \item \textbf{Qwen3 Coder} (OpenRouter) — modelo especializado en código, especialmente bueno generando HTML y CSS limpio
+\end{itemize}
+
+
+En segundo lugar, se implementó un selector de modelo completo, accesible desde el inicio del proceso, justo antes de analizar la URL. El selector ofrecía tres modos de uso:
+
+\begin{itemize}
+    \item \textbf{Predeterminado}: el sistema selecciona automáticamente el 
+    modelo más adecuado según el dataset analizado, buscando el equilibrio 
+    óptimo entre velocidad y calidad. Es la opción recomendada para la 
+    mayoría de casos.
+    
+    \item \textbf{Elegir modelo}: despliega el catálogo de modelos disponibles 
+    definido en \\ \texttt{utils/llm/llm\_catalog.py}, mostrando para cada modelo 
+    su nombre, proveedor, descripción y sus ventajas e inconvenientes.
+    
+    \item \textbf{Modelo personalizado}: utiliza el LLM configurado por el 
+    usuario en su perfil. Si el usuario no tiene ninguno configurado, esta 
+    opción aparece deshabilitada.
+\end{itemize}
+
+El catálogo cubría los casos más habituales, pero existía la necesidad de 
+permitir que cualquier usuario pudiera conectar su propio proveedor de LLM, 
+ya fuera uno privado, uno de pago con mejores capacidades o simplemente uno 
+diferente a los disponibles en el catálogo. Para soportar esto se creó el 
+modelo \texttt{UserProfile}, vinculado en relación \texttt{OneToOne} con el 
+usuario de Django. El modelo almacenaba tres campos opcionales:
+
+\begin{itemize}
+    \item \textbf{URL base del proveedor} (\texttt{custom\_llm\_base\_url}): 
+    dirección del endpoint del proveedor OpenAI-compatible, por ejemplo 
+    \texttt{https://api.groq.com/openai/v1} para Groq o 
+    \texttt{https://openrouter.ai/api/v1} para OpenRouter.
+    
+    \item \textbf{Identificador del modelo} (\texttt{custom\_llm\_model}): 
+    nombre exacto del modelo tal y como lo espera el proveedor, por ejemplo 
+    \texttt{meta-llama/llama-3.3-70b-instruct:free}.
+    
+    \item \textbf{API key} (\texttt{custom\_llm\_api\_key}): clave de acceso 
+    al proveedor, cifrada en base de datos mediante \texttt{EncryptedCharField} 
+    para que nunca se almacene en texto plano.
+\end{itemize}
+
+

@@ -1,0 +1,83 @@
+\section{Fase 2: Comienzo del desarrollo}
+\label{sec:comienzo-desarrollo}
+
+Con la propuesta del proyecto ya definida, el desarrollo comenzó con fuerza en febrero de 2026. Poco a poco fui creando la estructura base de 
+la aplicación: modelos, sistema de ingestion de datos, logica de analisis heuristico, y una interfaz minima y bastante pobre para poder hacer
+pruebas del flujo completo. La arquitectura hasta este punto era bastante sencilla: una aplicacion Django que recibia una URL, descargaba los 
+datos de la API, los analizaba y devolvía una propuesta de estructura para el futuro sitio web.
+
+\subsection{Modelo de datos}
+\label{subsec:modelo-datos}
+
+El unico modelo de la base de datos en esta fase era \texttt{APIRequest}, que recogia los datos de cada peticion URL realizada.
+Se encargaba de recoger los siguientes campos: Datos en crudo recogidos de la API (\texttt{raw\_data}), la estructura de datos ya parseada (\texttt{parsed\_data}),
+el estado del análisis mediante un campo de elección (\texttt{pending}, \texttt{processed} o \texttt{error}), y el mapping resultante que se mostraria al usuario
+(\texttt{field\_mapping}). Este modelo fue el eje central durante esta fase y será la base del análisis durante todo el proyecto
+
+\subsection{Ingestion de datos}
+\label{subsec:ingestion-datos}
+
+El modulo de ingestion de datos, ubicado en \texttt{utils/ingest/} es el encargado de validar la URL introducida por el usuario, realizar la descarga del contenido
+de forma segura y detectar automaticamente el formato de los datos. La validacion comprobaba que la URL procederia de \texttt{http} o \texttt{https}, que fuese
+procedente de un dominio valido y que su longitud no superase los 2048 caracteres. La descarga se realizaba en modo streaming, es decir, en vez de esperar que
+el contenido del archivo se descargue entero, vamos leyendo trozo a trozo procesado, cada trozo tiene un limite de 1MB, y un timeout de 8 segundos. Conseguimos de 
+esta forma evitar que una API con respuestas excesivamente grande nos tumbe o bloquee el sistema.
+
+La deteccion de formato se realiza inspeccionando los primeros caracteres del contenido de la API, de esta forma conseguiamos distinguir entre JSON y XML, que son 
+los contenidos manejados hasta este momento, mas adelante en el capitulo~\ref{subsec:nuevos-formatos-entrada} se aumenta el tipo de datos a procesar. En cualquier caso 
+siempre se devuelve una estructura Python homogenea, que se utiliza en adelante para el sistema, de forma que no es necesario seguir trabajando con el formato 
+original.
+
+\subsection{Deteccion de la colección principal}
+\label{subsection:deteccion-coleccion-principal}
+
+La parte mas compleja de esta fase fue entender la estructura interna de los campos de las distintas APIs. Los campos de las APIs no suelen ser una lista plana de items
+en la raiz, es decir, la colección principal no esta expuesta, sino que esta envuelta bajo claves de metadatos como \texttt{results}, \texttt{data} o \texttt{items},
+o incluso con varios niveles de profundidad. 
+
+Para resolver esto se implemento un nuevo modulo: \texttt{utils/analysis}, donde se crearon ficheros con funciones importantes como \texttt{find\_main\_items}, la cual recorria recursivamente la estructura de la API, y se evaluaba con un sistema de puntuacion propio para sacar la estructura principal.
+
+Cada lista candidata se puntuaba segun cinco factores:
+
+\begin{itemize}
+    \item \textbf{Densidad de diccionarios}: porcentaje de elementos de la lista que son diccionarios. Las listas con menos de un 55\% de dicts recibían una penalización proporcional, ya que era poco probable que representaran una colección de entidades reales.
+    \item \textbf{Tamaño}: listas con más items recibían mayor puntuación, aunque con un límite para evitar que una lista enorme pero trivial se impusiera sobre una colección más pequeña pero más relevante.
+    \item \textbf{Consistencia de claves}: si todos los diccionarios de la lista compartían aproximadamente las mismas claves, era muy probable que representaran entidades del mismo tipo. Se calculaba como el promedio de claves propias de cada item sobre la unión de todas las claves observadas.
+    \item \textbf{Bonus por claves semánticas}: si los campos de la colección incluían nombres típicos de contenido como \texttt{title}, \texttt{name}, \texttt{id},    \texttt{description} o \texttt{image}, se añadía una bonificación proporcional al número de coincidencias.
+    \item \textbf{Penalización por profundidad}: los paths muy anidados o que pasaban por índices numéricos se penalizaban para favorecer colecciones cercanas a la raíz, que solían ser las más relevantes.
+\end{itemize}
+
+Al finalizar este scoring, se seleccionaba la lista con mayor puntuacion como coleccion principal, junto con la ruta dentro de la estructura original.
+
+\subsection{Sugerencia automatica}
+\label{subsec:sugerencia-automatica}
+
+Una vez localizada la coleccion principal, se realizo la implementacion del nuevo fichero \textbf{utils/mapping.py}, encargado de sugerir automaticamente que campos
+del dataset debian ocupar cada rol: fecha, id, descripcion, etc. Para ello se utilizaba un catalogo predefinido que asociaba cada rol con sus nombres más habituales.
+Por ejemplo un campo llamado \texttt{published\_at}, obtenia un alto score para el rol fecha ya que contenia la subcadena \texttt{published}.
+Ademas de la comparacion por nombre, el sistema añadia score extra si el tipo del campo observado coincidia con el tipo esperado en el rol.
+
+Para evitar que la misma clave del dataset se asignara como primera sugerencia de varios roles a la vez, se implementó una funcion llamada \texttt{suggest\_mapping}, que aplicaba una asignación por orden de prioridad: primero se reservaba la mejor clave para el rol \texttt{id}, luego para \texttt{title}, luego para \texttt{description}, y así sucesivamente. Esto reducía la repetición de sugerencias y hacía el mapping resultante más útil para el usuario, sin embargo, ocurrian errores como que algunos campos se quedasen vacios o que al asignarse por orden de prioridad, campos sueltos se asignasen a roles
+que no tenian relacion.
+
+\subsection*{Eleccion pagina}
+\label{subsec:eleccion-pagina}
+
+Para guiar mejor al usuario durante el proceso de mapping, se añadió un sistema de perfiles de intención en \texttt{intents.py}. El usuario podía indicar si quería construir un blog, un portfolio, un catálogo o un directorio, y el sistema reordenaba los roles y ajustaba cuáles eran obligatorios, recomendados u opcionales según ese tipo de sitio.
+
+
+\subsection*{Calidad del mapping}
+\label{subsec:calidad-mapping}
+Además, se implementó un sistema de puntuación de calidad del mapping en \texttt{mapping.py}, que evaluaba de 0 a 100 el mapping introducido por el usuario teniendo en cuenta si había asignado los roles más importantes, si existían duplicados entre roles críticos y qué campos quedaban vacíos. El resultado se mostraba al usuario con una etiqueta cualitativa: \emph{Excelente}, \emph{Bueno}, \emph{Aceptable} o \emph{Mejorable}.
+
+
+\subsection*{Tests}
+\label{subsec:test1}
+
+Desde la primera fase se escribieron tests para los módulos principales: análisis, mapping, normalizer y parsers. Esto permitió verificar el 
+comportamiento del sistema de scoring con datasets variados, detectando casos en los que las heurísticas fallaban antes de que llegaran al usuario.
+\subsection*{Limitaciones del enfoque heurístico} \label{subsec:limitaciones1}
+
+Conforme se probaba el sistema con datasets reales muy distintos entre sí, los límites del enfoque heurístico se fueron haciendo evidentes. Una API de plantas medicinales, una de personajes de ficción y una de productos de e-commerce tienen nomenclaturas de campos completamente diferentes, y un sistema de reglas fijas no podía cubrir todos los casos con la misma fiabilidad. Cuando los nombres de los campos no coincidían con los campos de la API, el mapping era genérico y malo para el usuario. El sistema funcionaba razonablemente bien con APIs convencionales y con campos estándar, pero fallaba ante cualquier dataset con nombres o estructura poco habituales. Esta limitación fue la que motivó el cambio de enfoque descrito en la siguiente fase.
+
+

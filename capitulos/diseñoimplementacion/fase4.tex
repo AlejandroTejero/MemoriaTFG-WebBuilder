@@ -1,0 +1,94 @@
+\section{Fase 4: Generador de proyectos Django}
+\label{sec:generador-proytectos}
+
+Tras la implementacion del LLM y el sistema de schema funcionando correctamente, el siguiente paso era el mas complicado del proyecto: convertir el schema aprobado por el usuario
+en un proyecto django completo, funcional y desplegable. Durante esta fase del proyecto surgió el fichero más importante hasta la fecha: \textbf{utils/generator/project\_generator}, el nucleo de WebBuilder.
+
+
+\subsection{Arquitectura del generador}
+\label{subsec:arquitectura-generador}
+
+El generador se organiza como un orquestador de siete pasos secuenciales, cada uno con su responsabilidad concreta y encargado de producir uno o varios ficheros del proyecto final.
+El LLM interviene en los primeros seis pasos, que se encargan de la creacion de ficheros, pero en el septimo paso ya no interviene, y se concluye la ejecución con el ensamblaje de todos los ficheros generados anteriormente.
+
+\begin{itemize}
+    \item \textbf{Paso 1 — Estructura de páginas}: el LLM decide qué páginas tendrá el sitio, sus URLs, sus nombres de vista y si cada página es un listado, una página de detalle o una portada. El resultado es una lista de páginas que guiará todos los pasos siguientes.
+    \item \textbf{Paso 2 — models.py}: el LLM genera el modelo de datos Django adaptado a los campos del dataset.    
+    \item \textbf{Paso 3 — views.py y urls.py}: el LLM genera las vistas necesarias para cada página decidida en el paso 1. El fichero \texttt{urls.py} se genera en Python directamente a partir de la lista de páginas, sin intervención del modelo.
+    \item \textbf{Paso 4 — base.html}: el LLM genera la plantilla base del sitio, con la estructura HTML común a todas las páginas: cabecera, navegación y bloque de contenido.
+    \item \textbf{Paso 5 — Templates por página}: el LLM genera un template HTML independiente para cada página, adaptado a su tipo y a los campos del dataset.
+    \item \textbf{Paso 6 — load\_data.py}: el LLM genera un comando de gestión de Django que, al ejecutarse, descarga los datos de la API original y los inserta en la base de datos del sitio generado. Este fichero es fundamental para que el sitio tenga contenido real desde el primer arranque.
+    \item \textbf{Paso 7 — Archivos fijos}: se ensamblan todos los ficheros de infraestructura que no dependen del dataset ni del LLM: \texttt{settings.py}, \texttt{manage.py}, \texttt{wsgi.py}, \texttt{requirements.txt}, \texttt{Dockerfile} y \texttt{entrypoint.sh}.
+\end{itemize}
+
+El resultado final es un diccionario Python donde cada clave es una ruta relativa de fichero y cada valor es su contenido. Este diccionario se guarda en el campo \texttt{project\_files} del modelo \texttt{GeneratedSite}, comentado mas adelante en la subseccion~\ref{subsec:modelo-generatedsite}
+
+
+
+\subsection{Fallbacks generacion}
+\label{subsec:fallbacks-generacion}
+
+Durante las pruebas de generacion aprendí que las alucinaciones del LLM eran constantes y que iba a llevar mucho trabajo pulir cada prompt de generacion. El LLM cometia fallos en 
+cualquiera de los pasos, devolviendo codigo vacio, con errores de sintaxis o simplemente codigo random no adaptado a lo que tocaba en ese paso. Para poder tener un proyecto funcional aunque con algun error, decidí añadir \textbf{fallbacks} por cada template generado.
+
+La funcion de los fallbacks era sencilla, si el proyecto tenia un fallo grave, el fallback actuaba y generaba una version minima pero funcional del fichero en cuestión, de esta forma el proyecto saldría funcional sin fallos graves, existirían fallos mínimos que harian que el LLM produjese un proyecto algo más genérico pero siempre desplegable.
+
+
+\subsection{Evolución del modelo de datos}
+\label{subsec:modelo-generatedsite}
+
+El modelo \texttt{GeneratedSite} fue variando durante esta fase para reflejar los nuevos estados del sistema.
+Se añadieron los campos \texttt{project\_files} para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre del proyecto, \texttt{preview\_url} para guardar la URL del sitio desplegado (explicado en la siguiente subseccion~\ref{subsec:workflow-despliegue}), y dos nuevos conjuntos de estados. El primero, \texttt{generation\_status}, seguía el ciclo de vida de la generación con los valores \texttt{pending}, \texttt{generating}, \texttt{ready} y \texttt{error}. El segundo, \texttt{deploy\_status}, reflejaba el estado del despliegue Docker con los valores \texttt{idle}, \texttt{deploying}, \texttt{done} y \texttt{error}. 
+
+Esta separación entre el estado de generación y el estado de despliegue permitía saber con precisión en qué punto del proceso se encontraba cada sitio.
+
+
+\subsection*{Dockerfile, entrypoint y requirements}
+\label{subsec:dockerfile}
+
+Cada proyecto generado incluía un \texttt{Dockerfile}, un script \texttt{entrypoint.sh} y un fichero \texttt{requirements.txt} que en conjunto automatizaban completamente el arranque del sitio. El objetivo era que cualquier proyecto generado por WebBuilder se desplegase mediante Docker pulsando un botón, sin configuración manual por parte del usuario.
+
+El \texttt{Dockerfile} partía de la imagen oficial \texttt{python:3.12-slim}. Copiaba el \\ \texttt{requirements.txt}, instalaba las dependencias con \texttt{pip} y copiaba el resto del proyecto. Hasta entonces el puerto expuesto era el 8000, sobre el que se serviría la aplicación, esto variaría más adelante con la mejora del flujo de despliegue de n8n.
+
+El fichero \texttt{requirements.txt} incluido en cada proyecto generado contenía únicamente las dependencias mínimas para el funcionamiento del sitio: \texttt{django>=4.2,<6.0} como framework web, \texttt{requests>=2.28} para que el comando \texttt{load\_data} pudiera descargar los datos de la API original, y \texttt{gunicorn>=21.0} como servidor de producción. La decisión de mantener las dependencias al mínimo fue intencionada: cuantas menos dependencias tenga el proyecto generado, menos probabilidades hay de que el \texttt{docker build} falle por incompatibilidades o paquetes no disponibles.
+
+El script \texttt{entrypoint.sh} era el responsable del arranque completo del sitio, los pasos que ejecutaba son los siguientes:
+
+\begin{enumerate}
+    \item \textbf{Generación de migraciones}: ejecutaba \texttt{python manage.py makemigrations siteapp} para crear los ficheros de migración a partir del \texttt{models.py} generado por el LLM, siendo siteapp el nombre de la aplicación interna del proyecto generado.
+    \item \textbf{Aplicación de migraciones}: ejecutaba \texttt{python manage.py migrate} para crear las tablas en la base de datos SQLite del contenedor.
+    \item \textbf{Carga de datos}: ejecutaba \texttt{python manage.py load\_data}, el comando generado por el LLM en el paso 6 del generador, que descargaba los datos de la API original e insertaba los registros en la base de datos.
+    \item \textbf{Arranque del servidor}: lanzaba Gunicorn con dos workers y un timeout de 120 segundos para servir la aplicación Django en el puerto 8000.
+\end{enumerate}
+
+Esta secuencia garantizaba que al acceder al sitio por primera vez ya estuviera completamente funcional: base de datos creada, datos cargados y servidor en marcha. El uso de 
+Gunicorn en lugar del servidor de desarrollo de Django era una decisión deliberada para que los sitios generados tuvieran un nivel mínimo de robustez en producción.
+
+
+\subsection{Workflow de despligue n8n}
+\label{subsec:workflow-despliegue}
+
+En paralelo al desarrollo del generador de archivos, se fue construyendo el workflow mas importante del proyecto, encargado del despliegue de las paginas.
+La decision de realizar el despliegue de las paginas con n8n y no con Django fue una decision mas o menos sencilla, el unico problema de desplegar con Django era que el proceso
+de build del Docker puede tardar unos minutos, y si se ejecutaba desde Django la web, el servidor se quedaria bloqueado durante este tiempo. Al separarlo y crearlo con n8n, Django lo unico que tiene que hacer es el enviar la señal para que comience la ejecución del workflow.
+
+Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django realiza una llamada POST con el nombre del proyecto como parametro y a partir de aqui el workflow se ejecuta siguiendo los siguientes nodos sucesivamente:
+
+\begin{enumerate}
+    \item \textbf{Descomprimir ZIP}: el primer nodo crea el directorio de despliegue en \\ \texttt{/files/deploys/<project\_name>} y descomprime el ZIP del proyecto generado en un subdirectorio \texttt{src/}.
+    \item \textbf{Restablecer contenedor}: antes de construir la nueva imagen, el workflow intenta detener y eliminar cualquier contenedor anterior con el mismo nombre (\texttt{wb\_<project\_name>}). Si el contenedor no existe, el error se ignora y el flujo continúa sin interrupciones.
+    
+    \item \textbf{Elegir puerto}: el nodo escanea los puertos actualmente en uso por Docker en el rango 8100--8999 y selecciona el primer puerto libre disponible. Si no hay ningún puerto libre en ese rango, el flujo lanza un error controlado.
+    
+    \item \textbf{Docker Build}: ejecuta \texttt{docker build} sobre el directorio del proyecto con un timeout de 5 minutos. Si el build falla, captura los últimos 500 caracteres de los logs de error para facilitar el diagnóstico.
+    
+    \item \textbf{Docker Run}: arranca el contenedor en modo \emph{detached} con el nombre y el puerto asignados, mapeando el puerto elegido al puerto interno 8000 del contenedor.
+    
+    \item \textbf{Verificar Docker}: espera 20 segundos para dar tiempo al \texttt{entrypoint.sh} a ejecutar las migraciones y cargar los datos, y luego comprueba que el contenedor sigue en funcionamiento. Si el contenedor ha caído, recupera los últimos 40 líneas de sus logs y lanza un error con esa información para facilitar el diagnóstico.
+
+    \item \textbf{Responder al webhook}: si todo ha ido bien, devuelve a Django un JSON con la URL del preview, el nombre del contenedor y el puerto asignado, que WebBuilder almacena en el campo \texttt{preview\_url} del modelo \texttt{GeneratedSite}.
+\end{enumerate}
+
+Este diseño garantiza que el usuario siempre recibe una respuesta clara: si el despliegue tiene éxito obtiene la URL del sitio generado, y si falla en cualquier paso Django es notificado con información suficiente para actualizar el estado del sitio a \texttt{error} y mostrar un mensaje al usuario explicando lo ocurrido.
+
+
