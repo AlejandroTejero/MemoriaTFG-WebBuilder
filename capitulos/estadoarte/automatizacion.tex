@@ -1,0 +1,50 @@
+\section{Automatización e infraestructura}
+\label{sec:auto}
+
+Como se comento anteriorme, WebBuilder no solo se apoya en el backend de Django y Pyhton, tambien se usan herramientas extenas para la automatizacion de tareas y el despliegue de los proyectos. En esta sección se describen las herramientas de n8n, encargado de orquestar los flujos asíncronos de la plataforma, y de Docker, que proporciona el entorno aislado en el que se ejecutan los proyectos generados.
+
+
+\subsection{n8n}
+\label{subsec:n8n}
+
+n8n es una plataforma de automatización de flujos de trabajo de código abierto que permite conectar aplicaciones, APIs y servicios mediante una interfaz visual basada en nodos. Cada flujo de trabajo (\emph{workflow}) está compuesto por una secuencia de nodos quese ejecutan en cadena, donde cada nodo representa una accion, explicando su funcion dentro del contenido del mismo nodo, hay varias funciones: 
+
+\begin{itemize}
+    \item \textbf{Disparadores:} eventos que inician el flujo, como una 
+    petición HTTP entrante (webhook) o un temporizador programado (cron).
+    \item \textbf{Peticiones HTTP:} llamadas a APIs externas o internas para 
+    intercambiar datos entre servicios.
+    \item \textbf{Transformación de datos:} procesamiento y manipulación de 
+    la información entre nodos mediante lógica personalizada en JavaScript.
+    \item \textbf{Envío de correos:} notificaciones automáticas por email 
+    a usuarios o administradores ante determinados eventos del sistema.
+    \item \textbf{Ejecución de scripts:} bloques de código personalizado 
+    que permiten implementar lógica compleja directamente dentro del flujo.
+    \item \textbf{Consultas a base de datos:} lectura o escritura de datos 
+    en sistemas de persistencia externos integrados en el workflow.
+\end{itemize}
+
+Los flujos pueden pueden iniciarse a partir de webhooks (peticiones HTTP entrantes), disparadores temporales (\emph{cron}) o eventos de aplicaciones conectadas, y muchos de los nodos implementados en este proyecto son de logica de programacion. Estos nodos permite ejecutar fragmentos de codigo JavaScript personalizado, implementando logicas completas como la limpieza y despliegue de contenedores Docker.
+
+En WebBuilder, n8n actúa como una capa desacoplada que gestiona todo lo 
+que no forma parte del ciclo síncrono de petición-respuesta de Django:
+
+n8n actúa como una capa desacoplada que gestiona todo lo que no forma parte del ciclo síncrono de petición-respuesta de Django: 
+el envío de correos automáticos al registrarse o iniciar sesión, la notificación al finalizar una generación, la monitorización diaria del estado del sistema, el apagado automático de contenedores inactivos y, sobre todo, el despliegue de los proyectos generados en contenedores Docker. Esta arquitectura permite añadir nuevas automatizaciones sin modificar el código del backend principal.
+
+A diferencia de plataformas similares, n8n puede autoalojarse, lo que permite ejecutarlo en infraestructura propia y mantener el control completo sobre los datos y las credenciales. Como ocurre en este caso que esta desplegado dentro de un contenedor en local, pudiendo acceder y tener el control total de la herramienta
+
+
+\subsection{Docker}
+\label{subsec:docker}
+
+Dcoker es una herramienta que permite empaquetar aplicaciones junto con sus dependencias en unidades aisladas llamadas contenedores.
+A diferencia de la virtualización tradicional, los contenedores comparten el núcleo del sistema operativo anfitrión, lo que los hace mucho más ligeros y rápidos de arrancar que una máquina virtual convencional.
+
+Cada contenedor se construye a partir de una imagen, un artefacto inmutable que contiene el sistema de ficheros, el software instalado y la configuración necesaria para ejecutar la aplicación. Las imágenes se definen mediante un fichero de texto llamado \texttt{Dockerfile}, que 
+describe paso a paso cómo construir el entorno: la imagen base, los paquetes a instalar, el código a copiar y el comando que se ejecuta al arrancar el contenedor.
+
+Esta capacidad de empaquetado garantiza que la aplicación se ejecute de forma idéntica en cualquier entorno: el equipo de desarrollo, un servidor de pruebas o un entorno de producción. Esto resuelve uno de los problemas clásicos del despliegue, ejecutandose correctamente en algunas maquinas pero en otras no, debido a las diferencias entre los entornos en los que se desarrolla y se ejecuta una aplicación.
+
+En WebBuilder, Docker cumple dos funciones diferenciadas. Por un lado, aloja la propia herramienta de n8n utilizada por la plataforma de forma local. Por otro, y más importante, cada proyecto Django generado por WebBuilder incluye automáticamente su propio \texttt{Dockerfile}, lo que permite desplegarlo en un contenedor aislado sin necesidad de instalar dependencias en el sistema anfitrión. Un flujo especifico de n8n (webbuilder-deploy), construye la imagen, lanza el contenedor y le 
+asigna un puerto disponible de forma totalmente automática.

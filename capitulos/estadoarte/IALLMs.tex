@@ -1,0 +1,70 @@
+\section{Inteligencia artificial y modelos de lenguaje}
+\label{sec:ia}
+
+La inteligencia artificial generativa constituye el nucleo funcional del proyecto. En esta seccion se introducen los conceptos fundamentales sobre los modelos de lenguaje, el prompting engenieering y los proveedores de API uilizados para acceder a los diferentes modelos.
+
+
+\subsection{Modelos de lenguaje y IA generativa}
+\label{subsec:llms}
+
+Los modelos de lenguaje de gran tamaño (LLM, \emph{Large Language Models}) son sistemas de inteligencia artificial entrenados sobre grandes volumes de datos, a forma de entramiento y aprendizaje de los mismos. Su arquitectura se basa en redes neuronales de tipo \emph{Transformer}, que utilizan un mecanismo de atención para capturar relaciones de largo alcance entre palabras.
+
+A diferencia de los sistemas tradicionales de procesamiento de lenguaje natural, los LLM no se programan con reglas explícitas, sino que aprenden a predecir la siguiente palabra (o \emph{token}) de una secuencia a partir de las anteriores. Este simple objetivo, aplicado a escala masiva, da lugar a modelos capaces de mantener conversaciones, redactar textos, traducir idiomas, resumir documentos o, como en este caso, capaces de generar código funcional a partir de instrucciones en lenguaje natural.
+
+La irrupción mediática de modelos como ChatGPT en 2022 marcó el inicio de una etapa de adopción masiva de la IA generativa. Desde entonces, existen muchos modelos mejorados respecto al incio, tanto modelos comerciales (GPT-4, Claude, Gemini) como los modelos de pesos abiertos (LLaMA, Mistral, DeepSeek), accesibles a través de APIs públicas o ejecutables localmente. Esta diversidad y sobre todo a la existencia de modelos gratuitos permite a WebBuilder a elegir el modelo más adecuado para cada tarea en función de criterios como coste, latencia o calidad de respuesta.
+
+En este trabajo, los LLM no se utilizan como simples chatbots, sino como componentes programables dentro de un flujo automatizado: el modelo recibe datos estructurados, devuelve análisis razonados y produce código fuente que se integra directamente en el proyecto generado.
+
+
+\subsection{Ingeniería de prompts}
+\label{subsec:prompts}
+
+La ingeniería de prompts (\emph{prompt engineering}) es la disciplina que estudia cómo formular las instrucciones enviadas a un modelo de lenguaje para obtener respuestas precisas y acorde a una necesidad, intentando a su vez reducir el numero de alucionaciones. A diferencia de la programación tradicional, donde el comportamiento del sistema se especifica mediante código, en los LLM el comportamiento se controla a través del lenguaje natural del propio prompt.
+
+Para poder diseñar un buen prompt debemos seguir y combinar varios elementos: 
+
+\begin{itemize}
+    \item \textbf{Rol del modelo:} una descripción clara de la identidad o 
+    función que debe asumir el modelo durante la tarea.
+    \item \textbf{Instrucciones detalladas:} una especificación precisa de 
+    lo que se espera que el modelo haga y cómo debe hacerlo.
+    \item \textbf{Formato de respuesta:} indicaciones explícitas sobre la 
+    estructura que debe tener la salida, como JSON, código Python o texto 
+    plano.
+    \item \textbf{Restricciones:} limitaciones explícitas que acotan el 
+    comportamiento del modelo y reducen la probabilidad de respuestas 
+    incorrectas o fuera de contexto.
+    \item \textbf{Ejemplos de referencia:} muestras del estilo de salida 
+    esperado que guían al modelo hacia el resultado deseado. Esta técnica, 
+    conocida como \emph{few-shot prompting}, ha demostrado mejorar 
+    notablemente la calidad de las respuestas en tareas complejas o con 
+    formatos estrictos~\cite{openai_prompt_engineering}.
+\end{itemize}
+
+
+La calidad del resultado generado por un LLM depende, en \textbf{gran medida}, de la precisión del prompt. Un prompt ambiguo puede provocar respuestas inconsistentes, alucinaciones o salidas que no respetan el formato esperado. Por ello, el diseño, la iteración y el refinamiento de los prompts constituye una parte central del trabajo de desarrollo en sistemas basados en LLM, comparable en importancia a la propia escritura del código que los invoca.
+
+Como comenté en el parrafo anterior, la calida de la generación depende en gran medida del promtp, pero una parte tambien importante es la potencia o calidad del LLM con el que estemos trabajando. Si el LLM no tiene potencia o esta poco entrenado, aun teniendo un buen prompt este modelo no tendrá suficiente contenido como para generar la respuesta que buscamos.
+
+En el contexto de WebBuilder, la ingeniería de prompts juega un papel crítico en dos fases: el análisis de los datos de la API y la generación del código Django del proyecto. Cada uno de estos prompts ha sido diseñado tras innumerables pruebas para producir resultados coherentes y de calidad profesional, como se detallará en el capítulo de diseño e implementación. Ademas, durante el proyecto se fueron guardando los datos de cada generacion para realizar un estudio exhaustivo de que funciona mejor para cada caso.
+
+
+
+\subsection{Proveedores de modelos: OpenRouter y Groq}
+\label{subsec:proveedores}
+
+Para acceder a un LLm y poder usarlo, en la mayoria de casos es necesario recurrir a un proveedor de API que disponga del modelo y ofrezca su uso. Cada vez existen mas proveedores en el mercado, cada uno con su propio catalogo. La gran mayoria de estos proveedores siguen el estandar de OpenAI, lo que permite conectar de forma sencilla con WebBuilder. Cabe aclarar que los modelos gratuitos de los proveedores mencionados a continuacion realizan bien su trabajo, pero nunca de forma perfecta. Las alucinaciones a dia de hoy siguen existiendo sobre todo en los modelos gratuitos.
+
+\textbf{Groq} es un proveedor especializado en inferencia de baja latencia. Utiliza hardware propio (LPU, \emph{Language Processing Units}) optimizado, lo que le permite ofrecer velocidades de generación muy superiores a las de proveedores tradicionales basados en GPU. Groq aloja modelos de pesos abiertos como LLaMA, y dispone de un nivel de uso gratuito con límites de peticiones por minuto y por dia. Su rapidez hace que sea el mejor para WebBuilder, donde la generacion de templates es rapidisima.
+
+\textbf{OpenRouter} es un proveedor que da acceso a decenas de modelos de distintos proveedores a través de una única API. Lo mejor de este proveedor es la sencillez para la conexion: una sola clave de API permite consultar modelos de OpenAI, Anthropic, Google, Meta o cualquier otro proveedor integrado en la plataforma. Esto facilita las pruebas comparativas entre modelos y reduce el coste de cambiar de proveedor en caso necesario.
+
+\textbf{NVIDIA NIM} (\emph{NVIDIA Inference Microservices}) es el catálogo de modelos e inferencia en la nube de NVIDIA. Ofrece acceso a más de cien modelos de distintos fabricantes, entre ellos Meta, Mistral, DeepSeek y los propios modelos Nemotron de NVIDIA,ejecutados sobre infraestructura de GPUs de alto rendimiento. Al igual que los proveedores anteriores, expone sus modelos a través de una API compatible con el formato OpenAI, lo que permite integrarlo en WebBuilder sin ninguna modificación en el cliente LLM. Su 
+inclusión en el catálogo de proveedores de la plataforma amplía las opciones disponibles para el usuario, que puede elegir entre modelos optimizados para generación de código, razonamiento o tareas de propósito general.
+
+
+
+\subsection{Formato OpenAI-compatible}
+\label{subsec:openai_compat}
+
+Este estándar ha sido adoptado por la práctica totalidad de los proveedores de LLM relevantes, lo que permite a las aplicaciones cliente comunicarse con cualquiera de ellos cambiando únicamente la URL base, la clave de API y el identificador del modelo. De esta forma el sistema puede operar indistintamente con Groq, OpenRouter, Nvidia o cualquier otro proveedor compatible, sin necesidad de adaptar la lógica interna, simplemente modificando esas variables.
