@@ -23,7 +23,14 @@ El LLM interviene en los primeros seis pasos, que se encargan de la creacion de 
 
 El resultado final es un diccionario Python donde cada clave es una ruta relativa de fichero y cada valor es su contenido. Este diccionario se guarda en el campo \texttt{project\_files} del modelo \texttt{GeneratedSite}, comentado mas adelante en la subseccion~\ref{subsec:modelo-generatedsite}
 
+En la Figura~\ref{fig:generador-7-pasos} se muestra la secuencia completa de los siete pasos del generador.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img/disenoimplementacion/pasosgeneradorfase4.png}
+    \caption{Los 7 pasos del generador de proyectos Django}
+    \label{fig:generador-7-pasos}
+\end{figure}
 
 \subsection{Fallbacks generacion}
 \label{subsec:fallbacks-generacion}
@@ -43,7 +50,7 @@ Se añadieron los campos \texttt{project\_files} para almacenar todos los ficher
 Esta separación entre el estado de generación y el estado de despliegue permitía saber con precisión en qué punto del proceso se encontraba cada sitio.
 
 
-\subsection*{Dockerfile, entrypoint y requirements}
+\subsection{Dockerfile, entrypoint y requirements}
 \label{subsec:dockerfile}
 
 Cada proyecto generado incluía un \texttt{Dockerfile}, un script \texttt{entrypoint.sh} y un fichero \texttt{requirements.txt} que en conjunto automatizaban completamente el arranque del sitio. El objetivo era que cualquier proyecto generado por WebBuilder se desplegase mediante Docker pulsando un botón, sin configuración manual por parte del usuario.
@@ -91,4 +98,11 @@ Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django r
 
 Este diseño garantiza que el usuario siempre recibe una respuesta clara: si el despliegue tiene éxito obtiene la URL del sitio generado, y si falla en cualquier paso Django es notificado con información suficiente para actualizar el estado del sitio a \texttt{error} y mostrar un mensaje al usuario explicando lo ocurrido.
 
+En la Figura~\ref{fig:workflow-despliegue} se muestra el flujo completo del workflow de despliegue.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/disenoimplementacion/workflowdespliegue}
+    \caption{Workflow de despliegue n8n}
+    \label{fig:workflow-despliegue}
+\end{figure}

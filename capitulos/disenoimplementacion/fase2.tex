@@ -73,7 +73,18 @@ Cada lista candidata se puntuaba segun cinco factores:
     \item \textbf{Penalización por profundidad}: los paths muy anidados o que pasaban por índices numéricos se penalizaban para favorecer colecciones cercanas a la raíz, que solían ser las más relevantes.
 \end{itemize}
 
-Al finalizar este scoring, se seleccionaba la lista con mayor puntuacion como coleccion principal, junto con la ruta dentro de la estructura original.
+Al finalizar este scoring, se seleccionaba la lista con mayor puntuacion como 
+coleccion principal, junto con la ruta dentro de la estructura original. En la 
+Figura~\ref{fig:sistema-scoring} se muestra cómo los cinco factores se combinan 
+en la función de scoring para obtener la colección principal.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/disenoimplementacion/sistemascoring}
+    \caption{Sistema de scoring para la detección de la colección principal}
+    \label{fig:sistema-scoring}
+\end{figure}
+
 
 \subsection{Sugerencia automatica}
 \label{subsec:sugerencia-automatica}

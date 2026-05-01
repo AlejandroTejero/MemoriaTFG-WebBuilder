@@ -102,8 +102,14 @@ en el parseo, por lo que no existe en el dataset contruido. Para ello hubo que a
     \item \textbf{Fallback}: si tras aplicar todas las validaciones no queda ninguna clave válida, el sistema construye automáticamente un schema de emergencia con las primeras claves del dataset, garantizando que el flujo nunca se bloquea por un fallo del modelo.
 \end{itemize}
 
-Si el parseo falla, el sistema reintenta automáticamente una vez con una pista sobre el error cometido. Si el segundo intento también falla, se activa el fallback.
+Si el parseo falla, el sistema reintenta automáticamente una vez con una pista sobre el error cometido. Si el segundo intento también falla, se activa el fallback. En la Figura~\ref{fig:flujo-url-schema} se muestra el flujo completo desde que el usuario introduce la URL hasta obtener el schema validado.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{img/disenoimplementacion/flujourlfase3}
+    \caption{Flujo de ingestión y análisis: de URL a schema}
+    \label{fig:flujo-url-schema}
+\end{figure}
 
 \subsection{Actualizacion de modelos}
 \label{subsec:actualizacion-modelos}

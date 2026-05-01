@@ -9,8 +9,18 @@ Esta fase se divido en dos partes importantes. En primer lugar a la refactorizac
 \subsection{Refactor del generador en modulos}
 \label{subsec:refactor-generador-modulos}
 
-Estos cambios fueron muy importantes, los pasos del generador se realizaban con todo el contenido dentro del mismo fichero, algo que no era de facil escalabilidad a futuro, por lo que el primer cambio fue dividir el \textbf{project\_generator.py} en cuatro ficheros encargados cada uno de una labor
-especifica dentro de \textbf{utils/generator}. Estos ficheros fueron:
+Estos cambios fueron muy importantes, los pasos del generador se realizaban con 
+todo el contenido dentro del mismo fichero, algo que no era de facil escalabilidad 
+a futuro, por lo que el primer cambio fue dividir el \textbf{project\_generator.py} 
+en cuatro ficheros encargados cada uno de una labor especifica dentro de 
+\textbf{utils/generator}, como se muestra en la Figura~\ref{fig:modulos-generador}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/disenoimplementacion/modulosgenerador}
+    \caption{Estructura de módulos del generador tras el refactor}
+    \label{fig:modulos-generador}
+\end{figure}
 
 \begin{itemize}
     \item \textbf{\texttt{llm\_wrappers.py}}: Centralizó todas las llamadas al LLM en tres funciones reutilizables. \texttt{llm\_call} para llamadas básicas que devuelven texto, \texttt{llm\_json\_call} para llamadas que esperan JSON como respuesta, y \texttt{llm\_call\_logged} para llamadas que además guardan un registro en base de datos para mejorar la depuracion. Esta ultima funcion fue muy importante en el proceso de generacion y depuracion, anteriormente si algo fallaba no habia forma de saber que habia pasado, pero de esta forma cada vez que se llamaba al LLM durante la generación de un proyecto, además de hacer la llamada normal, guardaba automáticamente en base de datos un registro con toda la información de esa llamada: el paso que se estaba generando, el prompt enviado, la respuesta recibida y si había habido algún error. Ese registro se guarda en \texttt{GenerationLog}
