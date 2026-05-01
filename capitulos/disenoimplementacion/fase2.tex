@@ -9,10 +9,36 @@ datos de la API, los analizaba y devolvía una propuesta de estructura para el f
 \subsection{Modelo de datos}
 \label{subsec:modelo-datos}
 
-El unico modelo de la base de datos en esta fase era \texttt{APIRequest}, que recogia los datos de cada peticion URL realizada.
-Se encargaba de recoger los siguientes campos: Datos en crudo recogidos de la API (\texttt{raw\_data}), la estructura de datos ya parseada (\texttt{parsed\_data}),
-el estado del análisis mediante un campo de elección (\texttt{pending}, \texttt{processed} o \texttt{error}), y el mapping resultante que se mostraria al usuario
-(\texttt{field\_mapping}). Este modelo fue el eje central durante esta fase y será la base del análisis durante todo el proyecto
+El único modelo de la base de datos en esta fase era \texttt{APIRequest}, que recogía 
+los datos de cada petición URL realizada. Sus campos principales se muestran en la 
+Tabla~\ref{tab:modelo-apirequest}. Este modelo fue el eje central durante esta fase 
+y será la base del análisis durante todo el proyecto.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+        \hline
+        url & CharField & URL de la API introducida por el usuario \\
+        \hline
+        raw\_data & TextField & Datos en crudo descargados de la API \\
+        \hline
+        parsed\_data & JSONField & Estructura de datos ya parseada \\
+        \hline
+        status & CharField & Estado del análisis: pending, processed o error \\
+        \hline
+        field\_mapping & JSONField & Mapping resultante mostrado al usuario \\
+        \hline
+        created\_at & DateTimeField & Fecha y hora de creación de la petición \\
+        \hline
+        user & ForeignKey & Usuario propietario del análisis \\
+        \hline
+    \end{tabular}
+    \caption{Campos del modelo APIRequest en la Fase 2}
+    \label{tab:modelo-apirequest}
+\end{table}
+
 
 \subsection{Ingestion de datos}
 \label{subsec:ingestion-datos}

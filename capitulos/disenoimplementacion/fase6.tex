@@ -37,12 +37,54 @@ Otro problema detectado en las generaciones era que los templates HTML producido
 \subsection{Versionado de proyectos generados}
 \label{subsec:versionado-paginas}
 
-Hasta este momento, generar o editar una API existente en el historial, causaba que los ficheros existentes se sobreescribieran, de esta forma era imposible tener un control de versiones o recurrir a una prueba anterior que fuese mejor. Para solucionar esto se creo el modelo \textbf{SiteVersion}, enlazado mediante una clave foranea a \textbf{GeneratedSite}. Cada version estaba nombrada con un numero incremental, y almacenaba una copia completa de los ficheros, una etiqueta descriptiva opcional y la fecha de creacion del proyecto. Las versiones estaban ordenadas de forma mas reciente a mas antigua, permitiendo asi al usuario consultar un historial funcional y la posibilidad de recuperar cualquier version anterior.
+Hasta este momento, generar o editar una API existente en el historial, causaba que los ficheros existentes se sobreescribieran, de esta forma era imposible tener un control de versiones o recurrir a una prueba anterior que fuese mejor. Para solucionar esto se creo el modelo \textbf{SiteVersion}, enlazado mediante una clave foranea a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteversion}. Cada version estaba nombrada con un numero incremental, y almacenaba una copia completa de los ficheros, una etiqueta descriptiva opcional y la fecha de creacion del proyecto. Las versiones estaban ordenadas de forma mas reciente a mas antigua, permitiendo asi al usuario consultar un historial funcional y la posibilidad de recuperar cualquier version anterior.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+        \hline
+        site & ForeignKey & Sitio generado al que pertenece la versión \\
+        \hline
+        version\_number & IntegerField & Número incremental de la versión \\
+        \hline
+        project\_files & JSONField & Copia completa de los ficheros del proyecto \\
+        \hline
+        label & CharField & Etiqueta descriptiva opcional \\
+        \hline
+        created\_at & DateTimeField & Fecha de creación de la versión \\
+        \hline
+    \end{tabular}
+    \caption{Campos del modelo SiteVersion}
+    \label{tab:modelo-siteversion}
+\end{table}
+
 
 \subsection{Usuarios del proyecto}
 \label{subsec:usuarios-proyecto}
 
-Cada sitio Django generado incluia su propio sistema de autenticacion, son paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creo el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}. Cada usuario del sitio tenia su nombre, una contraseña y un rol. Este ultimo campo podria ser \texttt{super} para la creacion de un superusuario con acceso al panel de administracion Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinacion de proyecto y nombre de usuario era unica, evitando asi duplicados dentro del mismo proyecto.
+
+Cada sitio Django generado incluia su propio sistema de autenticacion, son paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creo el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteuser}. Cada usuario del sitio tenia su nombre, una contraseña y un rol. Este ultimo campo podria ser \texttt{super} para la creacion de un superusuario con acceso al panel de administracion Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinacion de proyecto y nombre de usuario era unica, evitando asi duplicados dentro del mismo proyecto.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+        \hline
+        site & ForeignKey & Sitio generado al que pertenece el usuario \\
+        \hline
+        username & CharField & Nombre del usuario del sitio generado \\
+        \hline
+        password & CharField & Contraseña del usuario \\
+        \hline
+        role & CharField & Rol del usuario: super o normal \\
+        \hline
+    \end{tabular}
+    \caption{Campos del modelo SiteUser}
+    \label{tab:modelo-siteuser}
+\end{table}
 
 \subsection{LLM local y catalogo de modelos disponibles}
 \label{subsec:llm-local-catalogo-modelos}
@@ -80,7 +122,8 @@ permitir que cualquier usuario pudiera conectar su propio proveedor de LLM,
 ya fuera uno privado, uno de pago con mejores capacidades o simplemente uno 
 diferente a los disponibles en el catálogo. Para soportar esto se creó el 
 modelo \texttt{UserProfile}, vinculado en relación \texttt{OneToOne} con el 
-usuario de Django. El modelo almacenaba tres campos opcionales:
+usuario de Django, como se muestra en la Tabla~\ref{tab:modelo-userprofile}. 
+El modelo almacenaba tres campos opcionales:
 
 \begin{itemize}
     \item \textbf{URL base del proveedor} (\texttt{custom\_llm\_base\_url}): 
@@ -96,5 +139,24 @@ usuario de Django. El modelo almacenaba tres campos opcionales:
     al proveedor, cifrada en base de datos mediante \texttt{EncryptedCharField} 
     para que nunca se almacene en texto plano.
 \end{itemize}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+        \hline
+        user & OneToOneField & Usuario de Django al que pertenece el perfil \\
+        \hline
+        custom\_llm\_base\_url & CharField & URL base del proveedor OpenAI-compatible \\
+        \hline
+        custom\_llm\_model & CharField & Identificador del modelo del proveedor \\
+        \hline
+        custom\_llm\_api\_key & EncryptedCharField & API key cifrada en base de datos \\
+        \hline
+    \end{tabular}
+    \caption{Campos del modelo UserProfile}
+    \label{tab:modelo-userprofile}
+\end{table}
 
 
