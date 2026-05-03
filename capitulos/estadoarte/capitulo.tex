@@ -8,13 +8,32 @@
 \chapter{Estado del arte}
 \label{chap:estado}
 
-En este capitulo describiré las tecnologías, herramientas y conceptos mas importantes que hicieron posible la creacion de WebBuilder, es decir, todo aquello que no ha sido creado en el marco de este trabajo pero que son fundamentales.
+En este capitulo se describirán las tecnologías, herramientas y conceptos mas importantes que hicieron posible la creacion de WebBuilder, es decir, todo aquello que no ha sido creado en el marco de este trabajo pero que son fundamentales.
 
 Cubriremos desde el framework web y la base de datos que sustentan la aplicacion, hasta los modelos de lenguaje y las herramientas de automatizacion e infraestructura que hacen posible el funcionamiento del proyecto.
 
-El capítulo se organiza en cuatro bloques temáticos. En primer lugar se presentan las tecnologías de backend y base de datos que conforman el núcleo de la aplicación. A continuación se introduce el campo de la inteligencia artificial generativa y los modelos de lenguaje, pieza central del proyecto, junto con los conceptos de ingeniería de prompts y los proveedores de API utilizados. El tercer bloque cubre n8n, la herramienta de automatización que orquesta los flujos de notificación y despliegue. Por último, se describen Docker y Tailwind CSS, tecnologías de infraestructura y presentación empleadas en los proyectos web generados por la plataforma.
+El capítulo se organiza en cuatro bloques temáticos, recogidos en la 
+Tabla~\ref{tab:bloques-estado-arte}.
 
-
+\begin{table}[H]
+\vspace{-1cm}
+    \centering
+    \begin{tabular}{|p{3.5cm}|p{4.5cm}|p{7cm}|}
+        \hline
+        \textbf{Bloque} & \textbf{Tecnologías} & \textbf{Rol en el proyecto} \\
+        \hline
+        Backend y base de datos & Python, Django, PostgreSQL & Núcleo de la aplicación: lógica de servidor, modelos y persistencia \\
+        \hline
+        IA y modelos de lenguaje & LLMs, Prompt Engineering, Groq, OpenRouter & Análisis de datos y generación automática de código \\
+        \hline
+        Automatización e infraestructura & n8n, Docker & Orquestación de flujos asíncronos y despliegue de proyectos \\
+        \hline
+        Frontend & HTML/CSS/JS, Tailwind CSS & Interfaz de la plataforma y presentación de los sitios generados \\
+        \hline
+    \end{tabular}
+    \caption{Bloques temáticos del estado del arte}
+    \label{tab:bloques-estado-arte}
+\end{table}
 
 \input{capitulos/estadoarte/backend}
 \input{capitulos/estadoarte/IALLMs}

@@ -7,33 +7,36 @@ El backend esta construido con diferentes tecnologias de desarrollo web profesio
 \subsection{Python}
 \label{subsec:python}
 
-Python es un lenguaje de programación interpretado, de alto nivel y útil para diferentes tipos de tareas. Creado por Guido van Rossum y publicado por primera vez en 1991, Python ha evolucionado hasta convertirse en uno de los lenguajes más utilizados del 
-mundo, especialmente en el ámbito del desarrollo web, el análisis de datos y la inteligencia artificial. Siendo uno de los lenguajes de programacion mas versatiles.
+Python es un lenguaje de programación interpretado, de alto nivel y útil para diferentes tipos de tareas. Creado por Guido van Rossum a principios de los años 90~\cite{python_history}, Python ha evolucionado hasta convertirse en uno de los lenguajes más utilizados del mundo, con un 57,9\% de uso entre los desarrolladores en 2025~\cite{stackoverflow_survey_2025}, especialmente en el ámbito
+del desarrollo web, el análisis de datos y la inteligencia artificial. Siendo uno de los lenguajes de programacion mas versatiles
 
-La sintaxis clara permite escribir programas concisos para combinar logica del servidor, procesamiento de APIs y muchas cosas mas. Python cuenta con un ecosistema de bibliotecas muy completo, distribuido a través de PyPI (\emph{Python Package Index}), del que WebBuilder hace uso directo: \texttt{requests} para la descarga de datos desde APIs externas, \texttt{xmltodict} y \texttt{defusedxml} para el parseo seguro de XML, y \texttt{zipfile} para el empaquetado de los proyectos generados, entre otras.
+La sintaxis clara permite escribir programas concisos para combinar logica del servidor, procesamiento de APIs y generación dinámica de código. Python cuenta con un ecosistema de bibliotecas muy completo, distribuido a través de PyPI (\emph{Python Package Index}), del que WebBuilder hace uso directo: \texttt{requests} para la descarga de datos desde APIs externas, \texttt{xmltodict} y \texttt{defusedxml} para el parseo seguro de XML y \texttt{zipfile} para el empaquetado de los proyectos generados.
 
 Durante todo el proyecto, mas alla del resto de tecnologias mencionadas a continuación, Python actua como base durante toda la logica del servidor, durante gran parte de procesos:
 
 \begin{itemize}
-    \item \textbf{Ingestión de datos:} descarga y procesamiento del contenido devuelto por APIs externas en los formatos soportado por la plataforma (JSON, XML, CSV y GeoJSON).
+    \item \textbf{Ingestión de datos:} descarga y procesamiento del contenido devuelto por APIs externas en los formatos soportados por la plataforma (JSON, XML, CSV y GeoJSON).
     \item \textbf{Validación de datos:} comprobación del formato y la accesibilidad de la URL introducida por el usuario, así como la verificación de que los datos devueltos son parseables y contienen información útil.
     \item \textbf{Comunicación con modelos de lenguaje:} construcción y envío de los prompts al LLM, gestión de la respuesta y extracción del contenido estructurado necesario para cada fase del asistente.
     \item \textbf{Generación dinámica de código:} producción programática de todos los ficheros que componen el proyecto Django generado, incluyendo modelos, vistas, plantillas, configuración de despliegue y scripts de carga de datos.
 \end{itemize}
 
-La versión utilizada es Python~3, aprovechando características modernas del lenguaje como las \emph{f-strings}, los gestores de contexto y el tipado opcional.
-
+La versión utilizada es Python~3, aprovechando características modernas del lenguaje
+como las \emph{f-strings} (cadenas de texto con expresiones Python embebidas, usadas en la construcción de prompts para el LLM).
 
 \subsection{Django}
 \label{subsec:django}
 
-Django es un framework de desarrollo web de codigo abierto para Python, que promueve el desarrollo rapido y escalado, asi como un diseño limpio. Fue publicado en 2005 y sigue el principio \emph{``batteries included''}: incluye de serie todo lo necesario para construir aplicaciones web completas, desde el sistema de enrutado de URLs hasta el ORM (\emph{Object-Relational Mapper}), el motor de plantillas, el sistema de autenticación y el panel de administración. Siendo desde el primer momento una web funcional y desplegable.
+Django es un framework de desarrollo web de código abierto para Python, que promueve 
+el desarrollo rápido y escalable, así como un diseño limpio~\cite{django_docs}. 
+Fue publicado en 2005 y sigue el principio \emph{``batteries included''}: incluye 
+de serie todo lo necesario para construir aplicaciones web completas, desde el sistema 
+de enrutado de URLs hasta el ORM (\emph{Object-Relational Mapper}), el motor de 
+plantillas, el sistema de autenticación y el panel de administración.
 
 Permite configurar todo lo necesario, Django incluye un sistema de gestión de base de datos \textbf{SQLite} integrado que permite definir las tablas y sus campos directamente en Python, sin necesidad de escribir SQL. Cada tabla de la base de datos se representa como una clase, y Django se encarga de traducir automáticamente las operaciones sobre esos objetos (consultas, inserciones, actualizaciones) a las instrucciones SQL correspondientes. Esto facilita el desarrollo inicial, y tambien la evolucion del modelo a través de migraciones automáticas, que registran cada cambio de forma controlada, siendo capaz de saber que se cambio o modifico en cada momento, teniendo mas control sobre el desarrollo.
 
-La logica de vistas y de URLs permite organizar la logica de forma clara y separada, con funciones clave que responden peticiones HHTP, separando el procesamiento de datos de la presentacion. El motor de plantillas permite generar HTML dinámico con una sintaxis sencilla, con soporte para herencia de plantillas, lo que favorece la reutilización de componentes visuales.
-
-En el proyecto, Django gestiona el ciclo completo de cada ejecución:
+La logica de vistas y de URLs permite organizar la logica de forma clara y separada, con funciones clave que responden peticiones HTTP, separando el procesamiento de datos de la presentacion. El motor de plantillas permite generar HTML dinámico con una sintaxis sencilla, con soporte para herencia de plantillas, lo que favorece la reutilización de componentes visuales.
 
 En WebBuilder, Django gestiona el ciclo de vida completo de cada análisis:
 
@@ -49,14 +52,14 @@ En WebBuilder, Django gestiona el ciclo de vida completo de cada análisis:
     a paso, el historial, las métricas y las páginas de administración.
 \end{itemize}
 
-La versión empleada es Django~5.1.
+La versión empleada es Django~5.1, que introduce mejoras en el ORM (capa de software que permite trabajar con la base de datos usando objetos Python en lugar de escribir SQL) y en el sistema de migraciones respecto a versiones anteriores.
 
 
-\subsection{Base de datos: de SQLite a PostgreSQL}
+\subsection{Base de datos: SQLite y PostgreSQL}
 \label{subsec:base-datos}
 
-La persistencia de datos ha ido evolucionando a lo largo de todo el proyecto, en las fases iniciales se utilizó SQLite, que es la base de datos que Django configura por defecto. SQLite almacena toda la base en un unico fichero local, lo que simplifica enormemente la puesta en marcha del proyecto, asi como las multiples prueba, sin necesidad de instalar ni configurar ningun servidor externo.
+SQLite es un sistema de base de datos ligero que almacena toda la información en un único fichero local, sin necesidad de instalar ni configurar un servidor externo~\cite{sqlite_docs}. Esta simplicidad lo convierte en la opción por defecto de Django para entornos de desarrollo, aunque presenta limitaciones en escrituras concurrentes al utilizar bloqueos sobre el fichero de datos.
 
-Sin embargo, esta base de datos esta mas relacionada con pruebas y con el despligue real del proyecto, presentando algunas limitaciones en escrituras concurrentes, ya que utiliza bloqueos en el fichero de datos. A medida que WebBuilder se fue desarrollando e incorporando funcionalidades complejas como el registro de multiples generaciones simultaneas, el historial por usuario o el panel de metricas, estas limitaciones se fueron haciendo mas evidentes.
+PostgreSQL es un sistema gestor de bases de datos relacional de código abierto, robusto y ampliamente utilizado en entornos de producción~\cite{postgresql_docs}. Ofrece soporte completo para transacciones ACID, concurrencia real mediante MVCC (\emph{Multi-Version Concurrency Control}) y un rico conjunto de tipos de datos, lo que lo convierte en una opción adecuada cuando se requiere mayor robustez y escalabilidad.
 
-Por este motivo, en las fases finales del proyecto, cuando se realizaban pruebas continuas para el testeo del flujo, se realizó la migración a PostgreSQL. Este es un sistema gestor de bases de datos relacional de código abierto, robusto y ampliamente utilizado en entornos de producción. PostgreSQL ofrece soporte completo para transacciones ACID, concurrencia real mediante MVCC (\emph{Multi-Version Concurrency Control}) y un rico conjunto de tipos de datos. Gracias a la capa de abstracción que proporciona el ORM de Django, esta migración no requirió modificar la lógica de la aplicación, sino únicamente actualizar la configuración de conexión y ejecutar las migraciones existentes sobre el nuevo motor.
+En WebBuilder se utilizaron ambas tecnologías de forma progresiva: SQLite durante las fases iniciales de desarrollo por su sencillez, y PostgreSQL en las fases finales para soportar un entorno de producción más exigente. El detalle de esta migración se describe en el capítulo~\ref{chap:diseno}.

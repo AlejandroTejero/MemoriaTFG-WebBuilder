@@ -1,33 +1,40 @@
 \section{Frontend}
 \label{sec:frontend}
 
-WebBuilder tiene dos capas de frontend diferenciadas: la interfaz de la propia plataforma, construida con tecnologías web estándar, y los proyectos que genera. 
+WebBuilder tiene dos capas de frontend diferenciadas: la interfaz de la propia 
+plataforma, construida con tecnologías web estándar, y los proyectos que genera.
 
-En este primer caso, la interfaz de WebBuilder está construida con HTML, CSS y JavaScript, las tres tecnologías fundamentales de la web, estandarizadas por el W3C (\emph{World Wide Web Consortium}). HTML define la estructura de cada página, CSS controla su presentación visual y JavaScript gestiona la interactividad en el lado del cliente. En WebBuilder estas tecnologías se utilizan en las plantillas Django para construir la interfaz del asistente paso a paso, el historial de análisis, el visor de código generado y el panel de métricas. JavaScript juega un papel especialmente relevante en aquellas vistas donde se requiere dinamismo sin recargar la página, como la previsualización del plan propuesto por el LLM o el editor de código integrado.
-
-Además, durante el flujo de generación, los proyectos web que WebBuilder produce incluyen una capa de presentación basada en tecnologías modernas de frontend. A diferencia de la interfaz principal, estos proyectos utilizan Tailwind CSS como sistema de estilos, un framework que encaja especialmente bien con la generación automática de interfaces por parte de modelos de lenguaje, como se describe proximamente.
-
+En este primer caso, la interfaz de WebBuilder está construida con HTML, CSS y 
+JavaScript, las tres tecnologías fundamentales de la web, estandarizadas por el 
+W3C (\emph{World Wide Web Consortium})~\cite{w3c}. HTML define la estructura de 
+cada página, CSS controla su presentación visual y JavaScript gestiona la 
+interactividad en el lado del cliente.
 
 \subsection{HTML, CSS y JavaScript}
 \label{subsec:htmlcssjs}
 
-HTML (\emph{HyperText Markup Language}) es el lenguaje de marcado que define la estructura y el contenido de las páginas web. En WebBuilder, todas las plantillas Django están escritas en HTML, organizando los elementos visuales del asistente, los formularios, las tablas de historial y los paneles de información.
+\textbf{HTML}~\cite{mdn_html} (\emph{HyperText Markup Language}) es el lenguaje de marcado que define la estructura y el contenido de las páginas web. En WebBuilder, todas las plantillas Django están escritas en HTML, organizando los elementos visuales del asistente, los formularios, las tablas de historial y los paneles de información.
 
-CSS (\emph{Cascading Style Sheets}) es el lenguaje de estilos que controla la presentación visual del HTML: colores, tipografías, espaciados,  disposición de los elementos y diseño responsive. La interfaz de WebBuilder utiliza CSS para definir tanto el tema visual general de la plataforma como los modos claro y oscuro implementados durante el desarrollo.
+\textbf{CSS}~\cite{mdn_css} (\emph{Cascading Style Sheets}) es el lenguaje de estilos que controla la presentación visual del HTML: colores, tipografías, espaciados,  disposición de los elementos y diseño responsive. La interfaz de WebBuilder utiliza CSS para definir tanto el tema visual general de la plataforma como los modos claro y oscuro implementados durante el desarrollo.
 
-JavaScript es el lenguaje de programación que añade interactividad en el lado del cliente, permitiendo modificar el contenido de la página sin necesidad de recargarla. En WebBuilder se emplea en varias vistas clave: la previsualización dinámica del plan propuesto por el LLM, el editor de código integrado para inspeccionar los ficheros generados y la actualización del estado del asistente en cada paso del flujo.
+\textbf{JavaScript}~\cite{mdn_javascript} es el lenguaje de programación que añade interactividad en el lado del cliente, permitiendo modificar el contenido de la página sin necesidad de recargarla. En WebBuilder se emplea en varias vistas clave: la previsualización dinámica del plan propuesto por el LLM, el editor de código integrado para inspeccionar los ficheros generados y la actualización del estado del asistente en cada paso del flujo.
 
 
 
 \subsection{Tailwind CSS}
 \label{subsec:tailwind}
 
-Tailwind CSS es un framework de hojas de estilo basado en el enfoque \emph{utility-first}. A diferencia de frameworks tradicionales como  Bootstrap, que ofrecen componentes predefinidos (botones, tarjetas, formularios) listos para usar, Tailwind proporciona un conjunto extenso de clases  que se combinan directamente en el HTML para construir cualquier diseño desde cero.
+Tailwind CSS~\cite{tailwind_docs} es un framework de hojas de estilo basado en el enfoque \emph{utility-first}. A diferencia de frameworks tradicionales como  Bootstrap, que ofrecen componentes predefinidos (botones, tarjetas, formularios) listos para usar, Tailwind proporciona un conjunto extenso de clases  que se combinan directamente en el HTML para construir cualquier diseño desde cero.
 
 Este enfoque ofrece varias ventajas prácticas. En primer lugar, evita el problema de los estilos huérfanos y la acumulación de CSS no utilizado, ya que cada clase aplicada está explícitamente presente en el marcado. En segundo lugar, permite un control fino sobre el diseño sin necesidad de sobrescribir estilos predefinidos, lo que reduce la complejidad del CSS final. Por último, su sistema de diseño coherente con escalas predefinidas para espaciados, colores, tipografías y puntos de ruptura responsivos favorece la consistencia visual entre componentes.
 
-Tailwind se ha convertido en una de las opciones más populares para proyectos web modernos, especialmente en aquellos generados a partir de  plantillas o asistentes automáticos, ya que su naturaleza declarativa encaja particularmente bien con la generación de interfaces por parte de 
-modelos de lenguaje. Los LLM tienden a producir HTML con clases Tailwind de forma natural, gracias a la abundancia de ejemplos presentes en sus datos de entrenamiento.
+Tailwind se ha convertido en una de las opciones más populares para proyectos 
+web modernos~\cite{stackoverflow_survey_2025}, y su naturaleza declarativa encaja 
+especialmente bien con la generación automática de interfaces por parte de modelos 
+de lenguaje, ya que los LLM tienden a producir HTML con clases Tailwind de forma 
+natural gracias a la abundancia de ejemplos presentes en sus datos de entrenamiento.
 
-En WebBuilder, todos los proyectos Django generados incluyen Tailwind CSS como sistema de estilos por defecto. Las plantillas HTML producidas por el LLM utilizan exclusivamente clases utilitarias de Tailwind, lo que garantiza una apariencia profesional y consistente sin necesidad de 
-mantener hojas de estilo personalizadas para cada proyecto generado.
+En WebBuilder, todos los proyectos Django generados incluyen Tailwind CSS como 
+sistema de estilos por defecto, garantizando una apariencia visual coherente 
+y profesional sin necesidad de mantener hojas de estilo personalizadas para 
+cada proyecto generado.
