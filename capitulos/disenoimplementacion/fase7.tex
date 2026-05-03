@@ -9,15 +9,28 @@ Esta ultima fase se dedico a pulir el sistema en todos sus puntos débiles, que 
 
 Uno de los principales problema durante todo el desarrollo fue que los proyectos tendian a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
 
-El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en esta fase son:
+El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en esta fase se muestran en la Tabla~\ref{tab:presets-visuales}:
 
-\begin{itemize}
-    \item \textbf{Neo Terminal}: estética cyberpunk con fondo casi negro y acento neón ácido. Layout denso orientado a escaneo rápido de información. Activado por palabras como \emph{terminal}, \emph{dark}, \emph{gaming} o \emph{futurista}.
-    \item \textbf{Bento Pop}: rejilla asimétrica con bloques de colores vivos e ilustrativos. Activado por palabras como \emph{bento}, \emph{mosaico} o \emph{asimétrico}.
-    \item \textbf{Quiet Editorial}: tipografía protagonista, márgenes amplios y estética de revista cultural sobria. Preset por defecto para sitios de tipo blog.
-    \item \textbf{Magazine Split}: portada con gran imagen dividida y tipografía impactante. Preset por defecto para catálogos.
-    \item \textbf{Glass Orbit}: estética glassmorphism con fondos oscuros y elementos traslúcidos. Preset por defecto para portfolios.
-\end{itemize} 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{5cm}|}
+        \hline
+        \textbf{Preset} & \textbf{Estética} & \textbf{Palabras clave activadoras} \\
+        \hline
+        Neo Terminal & Cyberpunk, fondo negro, acento neón & terminal, dark, gaming, futurista \\
+        \hline
+        Bento Pop & Rejilla asimétrica, colores vivos & bento, mosaico, asimétrico \\
+        \hline
+        Quiet Editorial & Tipografía protagonista, estética revista & Por defecto para blogs \\
+        \hline
+        Magazine Split & Gran imagen dividida, tipografía impactante & Por defecto para catálogos \\
+        \hline
+        Glass Orbit & Glassmorphism, fondos oscuros, traslúcidos & Por defecto para portfolios \\
+        \hline
+    \end{tabular}
+    \caption{Presets visuales disponibles en el módulo de diseño}
+    \label{tab:presets-visuales}
+\end{table}
 
 Cada tipo de sitio tiene asignado un preset por defecto que se aplica cuando el prompt del usuario no contiene ningun estilo descrito, garantizando que el resultado siempre tenga una identidad visual coherente con el tipo de contenido.
 

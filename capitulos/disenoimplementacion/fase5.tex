@@ -41,16 +41,40 @@ Hasta el momento los templates HTML eran ficheros que incluian todas las seccion
 
 En cuanto a los templates se creo un nuevo modulo \textbf{partials}, encargado de contener los fragmentos que representan una seccion concreta de cada pagina. Cada fichero principal paso a contener sus partials, incluyendose mediante la etiqueta \textbf{include} de Django.
 
-La home del proyecto, que hasta entonces era el fichero mas complejo, se dividió en seis partials independientes dentro de \texttt{templates/WebBuilder/partials/home}, quedando asi la nueva estructura:
+La home del proyecto, que hasta entonces era el fichero mas complejo, se dividió en seis partials independientes. En la Tabla~\ref{tab:partials-html} se muestra la estructura completa de partials tras el refactor:
 
-\begin{itemize}
-    \item \texttt{hero.html} — la sección principal de bienvenida
-    \item \texttt{examples.html} — ejemplos de sitios generados
-    \item \texttt{how.html} — explicación del funcionamiento
-    \item \texttt{llms.html} — sección de modelos de lenguaje compatibles
-    \item \texttt{metrics.html} — métricas públicas del sistema
-    \item \texttt{cta.html} — botón de acceso a la aplicación
-\end{itemize}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{5cm}|}
+        \hline
+        \textbf{Partial} & \textbf{Página} & \textbf{Responsabilidad} \\
+        \hline
+        hero.html & home & Sección principal de bienvenida \\
+        \hline
+        examples.html & home & Ejemplos de sitios generados \\
+        \hline
+        how.html & home & Explicación del funcionamiento \\
+        \hline
+        llms.html & home & Modelos de lenguaje compatibles \\
+        \hline
+        metrics.html & home & Métricas públicas del sistema \\
+        \hline
+        cta.html & home & Botón de acceso a la aplicación \\
+        \hline
+        input.html & assistant & Formulario de introducción de URL \\
+        \hline
+        analysis.html & assistant & Resultado del análisis del dataset \\
+        \hline
+        preview.html & assistant & Schema propuesto por la IA \\
+        \hline
+        published\_sites.html & history & Sitios generados y desplegados \\
+        \hline
+        recent\_analysis.html & history & Análisis recientes del usuario \\
+        \hline
+    \end{tabular}
+    \caption{Partials HTML tras el refactor de templates}
+    \label{tab:partials-html}
+\end{table}
 
 El asistente se dividió en tres partials dentro de \texttt{templates/WebBuilder/partials/assistant/}:
 
@@ -75,33 +99,65 @@ El historial se dividió en dos partials dentro de \texttt{templates/WebBuilder/
 \end{itemize}
 
 Los ficheros estáticos sufrieron una reorganización equivalente. 
-El CSS pasó a estar organizado por página y por sección dentro de 
-\texttt{static/css/}:
+El CSS pasó a estar organizado por página y por sección dentro de \texttt{static/css/}, como se muestra en la Tabla~\ref{tab:ficheros-css}:
 
-\begin{itemize}
-    \item \texttt{home/hero.css} — estilos de la sección principal de bienvenida
-    \item \texttt{home/examples.css} — estilos de la sección de ejemplos
-    \item \texttt{home/how.css} — estilos de la sección de funcionamiento
-    \item \texttt{home/llms.css} — estilos de la sección de modelos compatibles
-    \item \texttt{home/metrics.css} — estilos de la sección de métricas públicas
-    \item \texttt{home/cta.css} — estilos de la sección de acceso a la aplicación
-    \item \texttt{assistant.css} — estilos del asistente de generación
-    \item \texttt{history.css} — estilos del historial del usuario
-    \item \texttt{edit.css} — estilos de la página de edición del schema
-    \item \texttt{login.css} — estilos de las páginas de login y registro
-    \item \texttt{navbar.css} — estilos de la barra de navegación
-    \item \texttt{backgrounds.css} — fondos y efectos visuales compartidos
-\end{itemize}
 
-El JavaScript siguió el mismo criterio con ficheros independientes 
-por página en \texttt{static/js/}:
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|p{8cm}|}
+        \hline
+        \textbf{Fichero} & \textbf{Responsabilidad} \\
+        \hline
+        home/hero.css & Estilos de la sección principal de bienvenida \\
+        \hline
+        home/examples.css & Estilos de la sección de ejemplos \\
+        \hline
+        home/how.css & Estilos de la sección de funcionamiento \\
+        \hline
+        home/llms.css & Estilos de la sección de modelos compatibles \\
+        \hline
+        home/metrics.css & Estilos de la sección de métricas públicas \\
+        \hline
+        home/cta.css & Estilos de la sección de acceso \\
+        \hline
+        assistant.css & Estilos del asistente de generación \\
+        \hline
+        history.css & Estilos del historial del usuario \\
+        \hline
+        edit.css & Estilos de la página de edición del schema \\
+        \hline
+        login.css & Estilos de las páginas de login y registro \\
+        \hline
+        navbar.css & Estilos de la barra de navegación \\
+        \hline
+        backgrounds.css & Fondos y efectos visuales compartidos \\
+        \hline
+    \end{tabular}
+    \caption{Ficheros CSS tras la reorganización de estilos}
+    \label{tab:ficheros-css}
+\end{table}
 
-\begin{itemize}
-    \item \texttt{home.js} — lógica interactiva de la home
-    \item \texttt{assistant.js} — lógica del flujo del asistente
-    \item \texttt{edit.js} — lógica de la edición del schema
-    \item \texttt{site\_render.js} — lógica de la vista previa del sitio generado
-\end{itemize}
+El JavaScript siguió el mismo criterio con ficheros independientes por página en \texttt{static/js/}, como se muestra en la Tabla~\ref{tab:ficheros-js}:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|p{8cm}|}
+        \hline
+        \textbf{Fichero} & \textbf{Responsabilidad} \\
+        \hline
+        home.js & Lógica interactiva de la home \\
+        \hline
+        assistant.js & Lógica del flujo del asistente \\
+        \hline+
+        edit.js & Lógica de la edición del schema \\
+        \hline
+        site\_render.js & Lógica de la vista previa del sitio generado \\
+        \hline
+    \end{tabular}
+    \caption{Ficheros JavaScript tras la reorganización}
+    \label{tab:ficheros-js}
+\end{table}
+
 
 El \texttt{base.html} se actualizó para cargar las fuentes de Google Fonts 
 necesarias para el nuevo diseño: Inter para el texto general, 
