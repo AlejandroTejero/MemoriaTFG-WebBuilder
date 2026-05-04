@@ -1,13 +1,13 @@
 \section{Fase 7: Pulido y cierre}
 \label{sec:pulido-cierre}
 
-Esta ultima fase se dedico a pulir el sistema en todos sus puntos débiles, que eran: mejorar la calidad visual de los sitios generados, consolidar la infraestructura de produccion y completar los workflows de n8n que quedaban pendientes. Con infraestructura de produccion me refiero a los cambios que hacen que el proyecto sea util fuera del entorno de desarrollo, como por ejemplo la migración a una base de datos más robusta como PostgreSQL para soportar accesos concurrentes de multiples usuarios, la gestión automática de contenedores Docker activos o la monitorización diaria del sistema. Es decir, no se añadieron funcionalidades realmente nuevas, sino que se llevaron las existentes a un nivel de madurez adecuado para la entrega.
+Esta última fase se dedicó a pulir el sistema en todos sus puntos débiles, que eran: mejorar la calidad visual de los sitios generados, consolidar la infraestructura de producción y completar los workflows de n8n que quedaban pendientes. Por infraestructura de producción se entienden los cambios que hacen que el proyecto sea útil fuera del entorno de desarrollo, como por ejemplo la migración a una base de datos más robusta como PostgreSQL para soportar accesos concurrentes de múltiples usuarios, la gestión automática de contenedores Docker activos o la monitorización diaria del sistema. Es decir, no se añadieron funcionalidades realmente nuevas, sino que se llevaron las existentes a un nivel de madurez adecuado para la entrega.
 
 
 \subsection{Sistema de presets visuales}
 \label{subsec:sistema-presets-visuales}
 
-Uno de los principales problema durante todo el desarrollo fue que los proyectos tendian a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
+Uno de los principales problema durante todo el desarrollo fue que los proyectos tendían a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
 
 El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en esta fase se muestran en la Tabla~\ref{tab:presets-visuales}:
 
@@ -32,7 +32,7 @@ El fichero \texttt{presets.py} define un catálogo de estilos visuales completos
     \label{tab:presets-visuales}
 \end{table}
 
-Cada tipo de sitio tiene asignado un preset por defecto que se aplica cuando el prompt del usuario no contiene ningun estilo descrito, garantizando que el resultado siempre tenga una identidad visual coherente con el tipo de contenido.
+Cada tipo de sitio tiene asignado un preset por defecto que se aplica cuando el prompt del usuario no contiene ningún estilo descrito, garantizando que el resultado siempre tenga una identidad visual coherente con el tipo de contenido.
 
 El fichero \texttt{snippets.py} complementa los presets con fragmentos de HTML concretos y válidos para cada estilo: cards, heros y filas de listado con las clases Tailwind exactas que corresponden a cada preset. Estos snippets se incluyen en los prompts de generación de templates como ejemplos de referencia visual, asegurando que el LLM produzca código coherente con el estilo elegido.
 
@@ -43,8 +43,7 @@ El fichero \texttt{theme\_rules.py} centraliza tokens visuales reutilizables com
 
 Durante todo el desarrollo, WebBuilder había utilizado SQLite como base de datos, lo cual era suficiente para el entorno de desarrollo pero inadecuado para producción. En este sprint se realizó la migración a PostgreSQL, que ofrece mayor robustez, soporte para accesos concurrentes y mejor rendimiento con volúmenes de datos crecientes.
 
-La configuración en \texttt{settings.py} se actualizó para leer los parámetros de conexión desde variables de entorno: nombre de la base de datos (\texttt{DB\_NAME}), usuario (\texttt{DB\_USER}), contraseña (\texttt{DB\_PASSWORD}), host (\texttt{DB\_HOST}) y puerto (\texttt{DB\_PORT}, por defecto \texttt{5432}). La configuración anterior de SQLite se migró a la nueva base de datos, teniendo los logs y métricas anteriores.
-
+La configuración en \texttt{settings.py} se actualizó para leer los parámetros de conexión desde variables de entorno: nombre de la base de datos (\texttt{DB\_NAME}), usuario (\texttt{DB\_USER}), contraseña (\texttt{DB\_PASSWORD}), host (\texttt{DB\_HOST}) y puerto (\texttt{DB\_PORT}, por defecto \texttt{5432}). La configuración anterior de SQLite se migró a la nueva base de datos. Las migraciones existentes se aplicaron sobre la nueva base de datos, conservando los logs y métricas generados durante el desarrollo.
 
 \subsection{Workflow generation-done}
 \label{subsec:workflow-generation-done}

@@ -1,32 +1,49 @@
-\section{Fase 1: Definición del proyecto}
+\section{Sprint 1: Definición del proyecto}
 \label{sec:definicion-proyecto}
 
-El punto de partida del proyecto fue una reunión con el tutor en abril de 2025, en la que le comenté posibles ideas de trabajo.
+El punto de partida del proyecto fue una reunión con el tutor en abril de 2025, en la que se presentaron posibles ideas al tutor.
 En esa primera toma de contacto surgieron un par de ideas más, las cuales finalmente se acabaron descartando en nuestra segunda reunión,
-ya que decidimos adaptarnos un poco más a la situacion actual con el tema de las paginas webs y automatizaciones.
+ya que decidimos adaptarnos un poco más a la situación actual de las páginas webs y automatizaciones.
 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Reunión} & \textbf{Fecha} & \textbf{Resultado} \\
+        \hline
+        1ª & Abril 2025 & Presentación de ideas iniciales y definición del enfoque \\
+        \hline
+        2ª & Julio 2025 & Selección del proyecto final: WebBuilder \\
+        \hline
+    \end{tabular}
+    \caption{Reuniones de definición del proyecto}
+    \label{tab:reuniones-definicion}
+\end{table}
 
 La primera idea consistía en una aplicación web que, a partir de datos de APIs hospitalarias, ayudara a los pacientes a encontrar el centro 
 médico más adaptado a sus necesidades según una serie de parámetros. 
-La segunda idea ampliaba esa primera hacia un asistente de mudanza. Imaginese que alguien quiere instalarse en una ciudad, la aplicación
-recogería todos los datos de las APIs publicas y un parseo de los datos proporcionados por agencias y otras empresas, de tal forma que 
+La segunda idea ampliaba esa primera hacia un asistente de mudanza. Esta segunda idea planteaba un escenario sobre un usuario que deseaba instalarse en una ciudad, la aplicación
+recogería todos los datos de las APIs públicas y un parseo de los datos proporcionados por agencias y otras empresas, de tal forma que 
 introduciendo el usuario sus requisitos, se le organizaría un posible plan de vida en la zona.
-Ambas ideas tenían en común la lectura y procesamiento de APIs publicas, pero el alcance era demasiado limitado, lo que limitaba el valor del 
+Ambas ideas tenían en común la lectura y procesamiento de APIs públicas, pero el alcance era demasiado limitado, lo que limitaba el valor del 
 proyecto. 
 
+En la segunda reunión, realizada en Julio de 2025, llegamos a una idea más acotada, una aplicación web Django encargada de procesar los datos
+de cualquier API pública y generar automáticamente un sitio web personalizado. Más tarde pensé en posibles nombres para el proyecto, hasta que se acordó el nombre de WebBuilder.
 
-En la segunda reunion, realizada en Julio de 2025, llegamos a una idea más acotada, una aplicacion web Django encargada de procesar los datos
-de cualquier API publica y generar automaticamente un sitio web personalizado. Mas tarde pensé en posibles nombres para el proyecto, hasta que 
-al final dimos con el nombre de WebBuilder.
+Durante este período fui recogiendo información y creando las posibles fases del sistema:
+validación de la URL, procesamiento de los datos recogidos, preferencias sobre el diseño, etc. El tutor valoró positivamente estos pasos, lo que me impulsó para seguir adelante con el proyecto.
 
+Durante los meses de verano el proyecto comenzó poco a poco creando las partes más sencillas para ir dándole forma: la página de inicio, el sistema de login y registro de usuarios. Aunque en el futuro la parte estética cambiaría, la base más o menos se mantendría.
 
-En ese momento aún estaba liado con los examenes, pero en los ratos libres iba recogiendo informacion y creando las posibles fases del sistema:
-validación de la URL, procesamiento de los datos recogidos, preferencias sobre el diseño, etc. David valoró positivamente estos pasos, lo que 
-me dio mas energía para seguir adelante con el proyecto.
-
-
-Durante los meses de verano el proyecto comenzo poco a poco creando las partes mas sencillas para ir dandole forma: la pagina de inicio, el sistema de login y registro de usuarios. Aunque en el futuro todo esto cambiaría, la base mas  o menos se mantendría.
-
-Al principio no hubo un gran desarrollo de codigo, sino que dedicamos este periodo a definir con mas detalle el flujo de la aplicacion, estuvimos investigando tecnologias y diseñando procesos que deberia seguir el sistema. Este trabajo previo fue muy importante para el correcto desarrollo guiado de la aplicacion.
+Al principio no hubo un gran desarrollo de código, sino que se dedicó este período a definir con más detalle el flujo de la aplicación, se investigaron tecnologías y se diseñaron procesos que debería seguir el sistema. Este trabajo previo fue muy importante para el correcto desarrollo guiado de la aplicación. Estas tecnologías se explican más en detalle en la siguiente subsección.
 
 
+\subsection{Tecnologías evaluadas}
+\label{subsec:tecnologias-evaluadas}
+
+Se eligió \textbf{Django} como framework backend por su ORM integrado y su compatibilidad con las bibliotecas de procesamiento de datos necesarias, así como la fácil adaptación y escalabilidad de Python.
+
+Para la automatización de flujos asíncronos se consideró la implementación \textbf{n8n} por su capacidad de autoalojamiento y su interfaz visual, aunque su incorporación al proyecto se realizaría más tarde. 
+
+Sobre la integración de LLMs, no se planteó desde el inicio como una posibilidad, aunque más adelante como se describe en la sección~\ref{sec:integracion-llm-n8n} se realizaría su implementación.

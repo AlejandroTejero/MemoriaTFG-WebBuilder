@@ -1,15 +1,16 @@
 \section{Fase 4: Generador de proyectos Django}
 \label{sec:generador-proytectos}
 
-Tras la implementacion del LLM y el sistema de schema funcionando correctamente, el siguiente paso era el mas complicado del proyecto: convertir el schema aprobado por el usuario
-en un proyecto django completo, funcional y desplegable. Durante esta fase del proyecto surgió el fichero más importante hasta la fecha: \textbf{utils/generator/project\_generator}, el nucleo de WebBuilder.
+Tras la implementación del LLM y el sistema de schema funcionando correctamente, el siguiente paso era el más complejo del proyecto, ya que requería 
+coordinar múltiples llamadas al LLM de forma secuencial garantizando 
+que cada fichero generado fuese compatible con los anteriores. Dicho paso era convertir el schema aprobado por el usuario en un proyecto Django completo, funcional y desplegable. Durante esta fase del proyecto surgió el fichero más importante hasta la fecha: \textbf{utils/generator/project\_generator}, el núcleo de WebBuilder.
 
 
 \subsection{Arquitectura del generador}
 \label{subsec:arquitectura-generador}
 
 El generador se organiza como un orquestador de siete pasos secuenciales, cada uno con su responsabilidad concreta y encargado de producir uno o varios ficheros del proyecto final.
-El LLM interviene en los primeros seis pasos, que se encargan de la creacion de ficheros, pero en el septimo paso ya no interviene, y se concluye la ejecución con el ensamblaje de todos los ficheros generados anteriormente.
+El LLM interviene en los primeros seis pasos, que se encargan de la creación de ficheros, pero en el séptimo paso ya no interviene, y se concluye la ejecución con el ensamblaje de todos los ficheros generados anteriormente.
 
 \begin{itemize}
     \item \textbf{Paso 1 — Estructura de páginas}: el LLM decide qué páginas tendrá el sitio, sus URLs, sus nombres de vista y si cada página es un listado, una página de detalle o una portada. El resultado es una lista de páginas que guiará todos los pasos siguientes.
@@ -21,7 +22,7 @@ El LLM interviene en los primeros seis pasos, que se encargan de la creacion de 
     \item \textbf{Paso 7 — Archivos fijos}: se ensamblan todos los ficheros de infraestructura que no dependen del dataset ni del LLM: \texttt{settings.py}, \texttt{manage.py}, \texttt{wsgi.py}, \texttt{requirements.txt}, \texttt{Dockerfile} y \texttt{entrypoint.sh}.
 \end{itemize}
 
-El resultado final es un diccionario Python donde cada clave es una ruta relativa de fichero y cada valor es su contenido. Este diccionario se guarda en el campo \texttt{project\_files} del modelo \texttt{GeneratedSite}, comentado mas adelante en la subseccion~\ref{subsec:modelo-generatedsite}
+El resultado final es un diccionario Python donde cada clave es una ruta relativa de fichero y cada valor es su contenido. Este diccionario se guarda en el campo \texttt{project\_files} del modelo \texttt{GeneratedSite}, comentado más adelante en la subsección~\ref{subsec:modelo-generatedsite}
 
 En la Figura~\ref{fig:generador-7-pasos} se muestra la secuencia completa de los siete pasos del generador.
 
@@ -32,23 +33,71 @@ En la Figura~\ref{fig:generador-7-pasos} se muestra la secuencia completa de los
     \label{fig:generador-7-pasos}
 \end{figure}
 
-\subsection{Fallbacks generacion}
+\subsection{Fallbacks de generación}
 \label{subsec:fallbacks-generacion}
 
-Durante las pruebas de generacion aprendí que las alucinaciones del LLM eran constantes y que iba a llevar mucho trabajo pulir cada prompt de generacion. El LLM cometia fallos en 
-cualquiera de los pasos, devolviendo codigo vacio, con errores de sintaxis o simplemente codigo random no adaptado a lo que tocaba en ese paso. Para poder tener un proyecto funcional aunque con algun error, decidí añadir \textbf{fallbacks} por cada template generado.
+Durante las pruebas de generación se comprobó que las alucinaciones del LLM 
+eran constantes y que pulir cada prompt requeriría un trabajo considerable. 
+El LLM cometía fallos en cualquiera de los pasos, devolviendo código vacío, 
+con errores de sintaxis o código no adaptado al paso correspondiente. Para 
+garantizar que el proyecto resultante fuese siempre desplegable, se añadió 
+un fallback por cada paso del generador.
 
-La funcion de los fallbacks era sencilla, si el proyecto tenia un fallo grave, el fallback actuaba y generaba una version minima pero funcional del fichero en cuestión, de esta forma el proyecto saldría funcional sin fallos graves, existirían fallos mínimos que harian que el LLM produjese un proyecto algo más genérico pero siempre desplegable.
+El funcionamiento era el siguiente: si la respuesta del LLM era vacía o 
+inválida, el sistema activaba automáticamente una versión mínima pero 
+funcional del fichero en cuestión. Por ejemplo, el fallback de 
+\textbf{models.py} generaba un modelo genérico llamado \texttt{Item} con 
+un campo \texttt{CharField} por cada campo del dataset. El fallback de 
+\textbf{views.py} generaba vistas básicas de listado y detalle sobre ese 
+mismo modelo. El fallback de \textbf{pages} definía tres páginas fijas: 
+portada, catálogo y detalle. Y el fallback de \textbf{load\_data.py} 
+generaba un comando mínimo de carga de datos a partir de la URL original 
+de la API.
 
+De esta forma, aunque el LLM produjese un resultado de baja calidad en 
+algún paso, el proyecto generado siempre sería desplegable, aunque con 
+una interfaz más genérica.
 
 \subsection{Evolución del modelo de datos}
 \label{subsec:modelo-generatedsite}
 
-El modelo \texttt{GeneratedSite} fue variando durante esta fase para reflejar los nuevos estados del sistema.
-Se añadieron los campos \texttt{project\_files} para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre del proyecto, \texttt{preview\_url} para guardar la URL del sitio desplegado (explicado en la siguiente subseccion~\ref{subsec:workflow-despliegue}), y dos nuevos conjuntos de estados. El primero, \texttt{generation\_status}, seguía el ciclo de vida de la generación con los valores \texttt{pending}, \texttt{generating}, \texttt{ready} y \texttt{error}. El segundo, \texttt{deploy\_status}, reflejaba el estado del despliegue Docker con los valores \texttt{idle}, \texttt{deploying}, \texttt{done} y \texttt{error}. 
+El modelo \texttt{GeneratedSite} fue variando durante esta fase para reflejar 
+los nuevos estados del sistema. Se añadieron los campos \texttt{project\_files} 
+para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre 
+del proyecto y \texttt{preview\_url} para guardar la URL del sitio desplegado 
+(explicado en la subsección~\ref{subsec:workflow-despliegue}). Además se 
+incorporaron dos nuevos campos de estado cuya evolución se muestra en la 
+Tabla~\ref{tab:estados-generatedsite}.
 
-Esta separación entre el estado de generación y el estado de despliegue permitía saber con precisión en qué punto del proceso se encontraba cada sitio.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{7cm}|}
+        \hline
+        \textbf{Campo} & \textbf{Valores} & \textbf{Significado} \\
+        \hline
+        \textbf{generation\_status} & pending & El sitio está en espera de ser generado \\
+        \hline
+        & generating & El generador está produciendo los ficheros \\
+        \hline
+        & ready & Los ficheros han sido generados correctamente \\
+        \hline
+        & error & La generación ha fallado en algún paso \\
+        \hline
+        \textbf{deploy\_status} & idle & El contenedor no ha sido desplegado aún \\
+        \hline
+        & deploying & El workflow de n8n está construyendo la imagen \\
+        \hline
+        & done & El contenedor está en funcionamiento \\
+        \hline
+        & error & El despliegue ha fallado en algún paso \\
+        \hline
+    \end{tabular}
+    \caption{Estados del modelo GeneratedSite en la Fase 4}
+    \label{tab:estados-generatedsite}
+\end{table}
 
+Esta separación entre el estado de generación y el estado de despliegue 
+permitía saber con precisión en qué punto del proceso se encontraba cada sitio.
 
 \subsection{Dockerfile, entrypoint y requirements}
 \label{subsec:dockerfile}
@@ -59,7 +108,7 @@ El \texttt{Dockerfile} partía de la imagen oficial \texttt{python:3.12-slim}. C
 
 El fichero \texttt{requirements.txt} incluido en cada proyecto generado contenía únicamente las dependencias mínimas para el funcionamiento del sitio: \texttt{django>=4.2,<6.0} como framework web, \texttt{requests>=2.28} para que el comando \texttt{load\_data} pudiera descargar los datos de la API original, y \texttt{gunicorn>=21.0} como servidor de producción. La decisión de mantener las dependencias al mínimo fue intencionada: cuantas menos dependencias tenga el proyecto generado, menos probabilidades hay de que el \texttt{docker build} falle por incompatibilidades o paquetes no disponibles.
 
-El script \texttt{entrypoint.sh} era el responsable del arranque completo del sitio, los pasos que ejecutaba son los siguientes:
+El script \texttt{entrypoint.sh} era el responsable del arranque completo del sitio, los pasos que ejecutaba eran los siguientes:
 
 \begin{enumerate}
     \item \textbf{Generación de migraciones}: ejecutaba \texttt{python manage.py makemigrations siteapp} para crear los ficheros de migración a partir del \texttt{models.py} generado por el LLM, siendo siteapp el nombre de la aplicación interna del proyecto generado.
@@ -72,14 +121,17 @@ Esta secuencia garantizaba que al acceder al sitio por primera vez ya estuviera 
 Gunicorn en lugar del servidor de desarrollo de Django era una decisión deliberada para que los sitios generados tuvieran un nivel mínimo de robustez en producción.
 
 
-\subsection{Workflow de despligue n8n}
+\subsection{Workflow de despliegue n8n}
 \label{subsec:workflow-despliegue}
 
-En paralelo al desarrollo del generador de archivos, se fue construyendo el workflow mas importante del proyecto, encargado del despliegue de las paginas.
-La decision de realizar el despliegue de las paginas con n8n y no con Django fue una decision mas o menos sencilla, el unico problema de desplegar con Django era que el proceso
-de build del Docker puede tardar unos minutos, y si se ejecutaba desde Django la web, el servidor se quedaria bloqueado durante este tiempo. Al separarlo y crearlo con n8n, Django lo unico que tiene que hacer es el enviar la señal para que comience la ejecución del workflow.
+En paralelo al desarrollo del generador de archivos, se fue construyendo el workflow más importante del proyecto, encargado del despliegue de las páginas.
 
-Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django realiza una llamada POST con el nombre del proyecto como parametro y a partir de aqui el workflow se ejecuta siguiendo los siguientes nodos sucesivamente:
+La decisión de delegar el despliegue en n8n y no en Django respondía 
+a un problema técnico concreto: el proceso de build de Docker puede 
+tardar varios minutos, y ejecutarlo de forma síncrona desde Django 
+bloquearía el servidor durante ese tiempo. Al separarlo y crearlo con n8n, Django lo único que tiene que hacer es el enviar la señal para que comience la ejecución del workflow.
+
+Esta señal se envía desde la ruta \texttt{/webhook/webbuilder-deploy}. Django realiza una llamada POST con el nombre del proyecto como parámetro y a partir de aquí el workflow se ejecuta siguiendo los siguientes nodos sucesivamente:
 
 \begin{enumerate}
     \item \textbf{Descomprimir ZIP}: el primer nodo crea el directorio de despliegue en \\ \texttt{/files/deploys/<project\_name>} y descomprime el ZIP del proyecto generado en un subdirectorio \texttt{src/}.
@@ -91,7 +143,7 @@ Esta señal se envia desde la ruta \texttt{/webhook/webbuilder-deploy}. Django r
     
     \item \textbf{Docker Run}: arranca el contenedor en modo \emph{detached} con el nombre y el puerto asignados, mapeando el puerto elegido al puerto interno 8000 del contenedor.
     
-    \item \textbf{Verificar Docker}: espera 20 segundos para dar tiempo al \texttt{entrypoint.sh} a ejecutar las migraciones y cargar los datos, y luego comprueba que el contenedor sigue en funcionamiento. Si el contenedor ha caído, recupera los últimos 40 líneas de sus logs y lanza un error con esa información para facilitar el diagnóstico.
+    \item \textbf{Verificar Docker}: espera 20 segundos para dar tiempo al \texttt{entrypoint.sh} a ejecutar las migraciones y cargar los datos, y luego comprueba que el contenedor sigue en funcionamiento. Si el contenedor ha caído, recupera las últimos 40 líneas de sus logs y lanza un error con esa información para facilitar el diagnóstico.
 
     \item \textbf{Responder al webhook}: si todo ha ido bien, devuelve a Django un JSON con la URL del preview, el nombre del contenedor y el puerto asignado, que WebBuilder almacena en el campo \texttt{preview\_url} del modelo \texttt{GeneratedSite}.
 \end{enumerate}

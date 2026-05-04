@@ -1,24 +1,24 @@
 \section{Fase 3: Integracion LLM y n8n}
 \label{sec:integracion-llm-n8n}
 
-Con la fase 2 terminada y viendo que las limitaciones eran evidentes, decidimos hacer un cambio muy importante para el futuro del proyecto. Abandonamos 
-la idea del sistema de reglas que teniamos, aunque no en la totalidad, ya que había partes que nos seguirían siendo útiles. Decidimos así integrar un
-modelo de lenguaje (LLM) como nucleo o motor del análisis y generación de las paginas. Hasta este momento el sistema intentaba entender los datos mediante
-puntuaciones y comparaciones, pero decidimos que fuese la Inteligencia Artificial la encargada de escoger y proponer la estructura del sitio y decidiera que 
-campos mostrar. Como comente antes, no todo el flujo de análisis e ingesta se cambio, se eliminaron las partes de score y propuesta de dataset, pero en parseo 
-y análisis de los campos se mantuvo y modifico levemente, se metió todo el dataset en una estructura, que seria la que se pasaria al LLM, de forma que evitariamos
-alucinaciones o errores del LLM en la lectura de la API. Esta parte esta mejor explicada en la subseccion~\ref{subsec:proteccion-anti-alucionaciones}
+Con la fase 2 terminada y viendo que las limitaciones eran evidentes, se tomó la decisión de realizar un cambio fundamental para el futuro del proyecto. Se abandonó 
+la idea del sistema de reglas, aunque no en la totalidad, ya que algunas partes nos seguirían siendo útiles. Se decidió integrar un
+modelo de lenguaje (LLM) como núcleo o motor del análisis y generación de las páginas. Hasta este momento el sistema intentaba entender los datos mediante
+puntuaciones y comparaciones. A partir de este punto, se decidió que fuese la Inteligencia Artificial la encargada de escoger y proponer la estructura del sitio y decidiera que 
+campos mostrar. Como se comentó anteriormente, no todo el flujo de análisis e ingesta se cambió, se eliminaron las partes de score y propuesta de dataset, pero el parseo 
+y análisis de los campos se mantuvo y modificó levemente, se introdujo todo el dataset en una estructura, que sería la que se pasaría al LLM, de forma que evitaríamos
+alucinaciones o errores del LLM en la lectura de la API, obteniendo de esta forma un schema más consistente. Este proceso se describe con más detalle en la subsección~\ref{subsec:proteccion-anti-alucionaciones}
 
 
-\subsection{Conexion con LLM}
+\subsection{Conexión con LLM}
 \label{subsec:conexion-llm}
 
-Para poder realizar la conexion con el LLM, el primer paso fue crear el módulo \textbf{utils/llm}, y dentro creamos el archivo \texttt{client.py}, el cual
-implementa la funcion \texttt{chat\_completions}. Esta funcion se encarga de hacer una unica cosa: enviar un mensaje al LLM y devolver la respuesta en texto
+Para poder realizar la conexión con el LLM, el primer paso fue crear el módulo \textbf{utils/llm}, y dentro se creó el archivo \texttt{client.py}, el cual
+implementa la función \texttt{chat\_completions}. Esta función se encarga de hacer una única cosa: enviar un mensaje al LLM y devolver la respuesta en texto
 plano.
 
-Una decisión importante fue utilizar el estandar de la mayoria de proveedores para realizar la conexion, utilizando de esta forma el endpoint \textbf{/chat/completions}. En este caso creado para poder realizar pruebas con varios LLM de diferentes proveedores (OpenRouter, Groq, NVIDIA) y cualquier agente local.
-Otra decision fue crear \texttt{.env}, de forma que la URL base, la API key y el modelo se leen de variables de entorno definidas en dicho fichero, lo que permite cambiar de proveedor sin tocar una sola línea de código.
+Una decisión importante fue utilizar el estándar de la mayoría de proveedores para realizar la conexión, utilizando de esta forma el endpoint \textbf{/chat/completions}. En este caso creado para poder realizar pruebas con varios LLM de diferentes proveedores (OpenRouter, Groq, NVIDIA) y cualquier agente local.
+Otra decisión fue crear \texttt{.env}, de forma que la URL base, la API key y el modelo se leen de variables de entorno definidas en dicho fichero, lo que permite cambiar de proveedor sin tocar una sola línea de código.
 
 La función mencionada anteriormente acepta tres parámetros principales:
 
@@ -32,7 +32,9 @@ La función mencionada anteriormente acepta tres parámetros principales:
     indicarle el rol que debe adoptar, el formato de respuesta esperado y lo que 
     está prohibido hacer. Es opcional, ya que técnicamente todo puede ir en el 
     mensaje de usuario, pero separarlo es una buena práctica que facilita reutilizar 
-    el mismo comportamiento base en distintas llamadas.
+    el mismo comportamiento base en distintas llamadas. Por ejemplo, el mensaje de sistema del planner indica al modelo que es un experto en diseño 
+    de sitios web, que debe devolver únicamente un objeto JSON válido y que está 
+    prohibido inventar campos que no existan en el dataset proporcionado.
     
     \item \textbf{Temperatura}: parámetro que controla el grado de aleatoriedad 
     en las respuestas del modelo. Un valor cercano a 0 produce respuestas más 
@@ -49,7 +51,7 @@ El primer proveedor utilizado fue OpenRouter, con el modelo de meta-llama: \\
 \subsection{Planner schema}
 \label{subsec:planner-schema}
 
-Otro fichero clave fue \texttt{utils/llm/planner.py} y su funcion \texttt{generate\_site\_plan}. La mision era transformar el resultado del analisis en un propuesta con campos
+Otro fichero clave fue \texttt{utils/llm/planner.py} y su función \texttt{generate\_site\_plan}. La misión era transformar el resultado del análisis en un propuesta con campos
 concretos de schema que el usuario pudiese aceptar y modificar a su gusto antes de continuar.
 
 El schema tiene una forma fija que el resto del sistema espera:
@@ -84,21 +86,47 @@ prompt es la siguiente:
     fuera del JSON.
 \end{itemize}
 
-Esta rigidez sobre el formato de salida, es intencionada, ya que tras la realizacion de varias pruebas los fallos generados por los diferentes LLM siempre eran parecidos.
-Como esa respuesta va a ser usada directamente, cualquier texto adicional rompe el proceso. De todas formas, debido a las alucinaciones de algunos modelos y la ignoracion 
-de las restricciones en algunas ocasiones, se aplicaba una limpieza previa que eliminaba bloques Markdown y caracteres sobrantes del parseo JSON.
+Esta rigidez sobre el formato de salida es intencionada, ya que tras la 
+realización de varias pruebas, los fallos generados por los diferentes LLM 
+siempre eran parecidos. Como esa respuesta se usa directamente en el sistema, 
+cualquier texto adicional rompe el proceso de parseo.
+
+De todas formas, debido a las alucinaciones de algunos modelos y a que en 
+ocasiones ignoraban las restricciones de formato, se aplicaba una limpieza 
+previa sobre la respuesta antes de parsearla. Esta limpieza eliminaba bloques 
+de código Markdown como \texttt{```json} o \texttt{```}, que algunos modelos 
+añaden automáticamente alrededor del JSON aunque se les indique explícitamente 
+que no lo hagan, así como espacios y caracteres sobrantes al inicio y al final 
+de la respuesta, los cuales rompían el flujo de ejecución del proyecto.
 
 
-\subsection{Proteccion anti-alucinaciones}
+\subsection{Protección anti-alucinaciones}
 \label{subsec:proteccion-anti-alucionaciones}
 
-Los errores mas comunes siempre sucedian por la misma causa, las alucinaciones del LLM. El error mas comun era inventar informacion que no existia en la API, y que nunca se
-en el parseo, por lo que no existe en el dataset contruido. Para ello hubo que aplicar varias capas de defensa contra alucinaciones para proteger los schemas.
+Los errores más comunes siempre sucedían por la misma causa, las alucinaciones del LLM. El error más común era inventar información que no existía en la API, y que nunca se parseo, por lo que no existe en el dataset construido. Para ello hubo que aplicar varias capas de defensa contra alucinaciones para proteger los schemas.
 
 \begin{itemize}
     \item \textbf{Validación contra claves reales}: cada clave propuesta por el LLM se comprueba contra la lista de claves reales extraída del dataset. Si la clave no existe, se intenta un match sin distinguir mayúsculas y minúsculas. Si tampoco hay coincidencia, la clave se descarta silenciosamente.
-    \item \textbf{Filtro de tokens prohibidos}: existe una lista de palabras que el modelo confunde con claves del dataset porque forman parte del propio prompt, como \texttt{available\_keys}, \texttt{fields} o \texttt{examples}. Cualquier clave que coincida con esta lista se descarta automáticamente.
-    \item \textbf{Detección de valores disfrazados de claves}: se detectan los casos en los que el modelo introduce un valor concreto del dataset donde debería haber puesto el nombre de un campo, como fechas en formato ISO, URLs completas o cadenas excesivamente largas.
+
+    \item \textbf{Filtro de tokens prohibidos}: existe una lista de palabras que 
+    el modelo confunde con claves del dataset porque forman parte del propio prompt del usuario. 
+    Al estar palabras como \texttt{available\_keys}, \texttt{fields} o 
+    \texttt{examples} presentes en el texto del prompt, algunos modelos las 
+    interpretan erróneamente como campos reales del dataset y las incluyen en su 
+    respuesta. Por ejemplo, si el prompt contiene la línea 
+    \texttt{"available\_keys": ["name", "date", "url"]}, el modelo puede devolver 
+    \texttt{available\_keys} como uno de los campos seleccionados, cuando en 
+    realidad es una etiqueta del propio prompt. Cualquier clave que coincida con 
+    esta lista se descarta automáticamente.
+    
+    \item \textbf{Detección de valores disfrazados de claves}: se detectan los 
+    casos en los que el modelo introduce un valor concreto del dataset donde 
+    debería haber puesto el nombre de un campo. Por ejemplo, si el dataset tiene 
+    un campo de fecha, el modelo puede devolver \texttt{2024-01-15} como clave 
+    en lugar de \texttt{published\_at}. Para evitarlo, se descartan 
+    automáticamente cadenas que sean fechas en formato ISO, URLs completas, 
+    extensiones de imagen, valores nulos o texto excesivamente largo.
+    
     \item \textbf{Fallback}: si tras aplicar todas las validaciones no queda ninguna clave válida, el sistema construye automáticamente un schema de emergencia con las primeras claves del dataset, garantizando que el flujo nunca se bloquea por un fallo del modelo.
 \end{itemize}
 
@@ -111,28 +139,47 @@ Si el parseo falla, el sistema reintenta automáticamente una vez con una pista 
     \label{fig:flujo-url-schema}
 \end{figure}
 
-\subsection{Actualizacion de modelos}
+\subsection{Actualización de modelos}
 \label{subsec:actualizacion-modelos}
 
-La integracion del LLM trajo consigo dos cambios importantes.
+La integración del LLM trajo consigo dos cambios importantes.
 
-El primero de ellos fue una modificacion en el modelo existente \textbf{APIRequest}, añadiendole el campo \texttt{plan\_accepted}. Siendo este un booleano encargado de guardar
+El primero de ellos fue una modificación en el modelo existente \textbf{APIRequest}, añadiéndole el campo \texttt{plan\_accepted}. Siendo este un booleano encargado de guardar
 si el usuario ha aceptado el schema propuesto antes de continuar.
 
-El segundo fue la creacion de un nuevo modelo llamado \textbf{GeneratedSite}, vinculado con el modelo APIRequest mediante una relacion \texttt{OneToOne}. Este modelo se
-encargaba de guardar el plan aceptado, y los templates generados para el sitio web, y un identificador unico en el campo \texttt{public\_id}. Este modelo fue muy importante para
-la generacion de los proyectos que se desarrollaria en la siguiente fase.
+El segundo fue la creación de un nuevo modelo \textbf{GeneratedSite}, 
+vinculado con el modelo \texttt{APIRequest} mediante una relación 
+\texttt{OneToOne}. Sus campos principales se muestran en la 
+Tabla~\ref{tab:modelo-generatedsite}.
 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{8cm}|}
+        \hline
+        \textbf{Campo} & \textbf{Tipo} & \textbf{Descripción} \\
+        \hline
+        api\_request & OneToOneField & Referencia al análisis que originó el sitio \\
+        \hline
+        public\_id & UUIDField & Identificador único público del sitio generado \\
+        \hline
+        plan & JSONField & Schema aceptado por el usuario con los campos seleccionados \\
+        \hline
+        project\_files & JSONField & Ficheros del proyecto generado indexados por ruta \\
+        \hline
+    \end{tabular}
+    \caption{Campos principales del modelo GeneratedSite en la Fase 3}
+    \label{tab:modelo-generatedsite}
+\end{table}
 
-\subsection{Integracion de n8n}
+\subsection{Integración de n8n}
 \label{subsec:integracion-n8n}
 
 En paralelo a la integración del LLM, durante esta fase se incorporó n8n al sistema por primera vez. Es una herramienta de automatización de flujos que permite conectar servicios mediante webhooks y nodos, y que más adelante sería una pieza fundamental de la arquitectura del proyecto. En este momento su uso fue todavía inicial: instalar el entorno y crear el primer flujo de pruebas.
 
 n8n se instaló en un contenedor Docker siguiendo la imagen oficial, quedando disponible en \texttt{localhost:5678}. Una vez levantado el entorno, se creó el primer flujo en n8n y se configuró el primer webhook, apuntando a la ruta \texttt{/webhook-test/WebBuilder-Register}. El prefijo \texttt{webhook-test} indica que el webhook estaba en modo de prueba, el modo que n8n ofrece para verificar que el flujo funciona correctamente antes de activarlo en producción.
 
-La integración en Django se realizó en \texttt{views/auth.py}, donde se añadió la función \texttt{llamar\_webhook}.
-El nodo se encargaría de notificar a un nuevo usuario en base de datos, es decir, aquellos usuarios recién registrados. Django realizaba una llamada POST a ese webhook con el nombre de usuario y el email, y n8n enviaba automáticamente un correo de bienvenida. Más adelante se completaría el flujo con el webhook de login.
+La integración en Django se realizó en \texttt{views/auth.py}, donde se añadió la función\texttt{llamar\_webhook}. El nodo se encargaría de notificar a los usuarios recién registrados: Django realizaba una llamada POST a ese webhook con el nombre de usuario y el email del recién registrado, y n8n enviaba automáticamente un correo de bienvenida 
+personalizado a esa dirección. Más adelante se completaría el flujo con el webhook de login.
 
 La función estaba diseñada para ser completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente y el registro continuaba con normalidad. Esto garantizaba que un fallo en el sistema de notificaciones nunca pudiera bloquear el acceso a la aplicación.
 
