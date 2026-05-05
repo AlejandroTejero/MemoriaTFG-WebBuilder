@@ -31,9 +31,9 @@ del flujo, como la gestión y despliegue de contenedores Docker.
 En WebBuilder, n8n actúa como una capa desacoplada que gestiona todo lo que no forma parte del ciclo síncrono de petición-respuesta de Django: 
 el envío de correos automáticos al registrarse o iniciar sesión, la notificación al finalizar una generación, la monitorización diaria del estado del sistema, el apagado automático de contenedores inactivos y, sobre todo, el despliegue de los proyectos generados en contenedores Docker. Esta arquitectura permite añadir nuevas automatizaciones sin modificar el código del backend principal.
 
-A diferencia de plataformas similares, n8n puede autoalojarse, lo que permite ejecutarlo en infraestructura propia y mantener el control completo sobre los datos y las credenciales, como ocurre en este proyecto donde se ejecuta en un 
-contenedor Docker local.
+A diferencia de plataformas similares, n8n puede autoalojarse, lo que permite ejecutarlo en infraestructura propia y mantener el control completo sobre los datos y las credenciales, como ocurre en este proyecto donde se ejecuta en un contenedor Docker local.
 
+La comunicación entre WebBuilder y n8n se basa en el patrón \textit{webhook}: una llamada HTTP que un sistema realiza hacia otro para notificar que ha ocurrido un evento, sin esperar una respuesta inmediata. A diferencia de una llamada síncrona, donde el proceso queda bloqueado hasta recibir el resultado, un webhook permite que el sistema emisor continúe su ejecución mientras el receptor procesa la tarea de forma independiente~\cite{webhook_patterns}.
 
 \subsection{Docker}
 \label{subsec:docker}

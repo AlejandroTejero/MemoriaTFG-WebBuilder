@@ -1,0 +1,67 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% OBJETIVOS %
+% Frase q cuentas para explicar de q va el tfg % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\cleardoublepage % empezamos en página impar
+\chapter{Objetivos} % título del capítulo (se muestra)
+\label{chap:objetivos} % identificador del capítulo (no se muestra, es para poder referenciarlo)
+
+\section{Objetivo general} % título de sección (se muestra)
+\label{sec:objetivo-general} % identificador de sección (no se muestra, es para poder referenciarla)
+
+El objetivo principal del proyecto es el diseño e implementación de WebBuilder, una plataforma web capaz de generar automáticamente sitios web Django funcionales y desplegables a partir de los datos de cualquier API pública. El usuario introduce únicamente la URL de la API y una descripción en lenguaje natural de cómo quiere que sea el sitio, y el sistema se encarga del resto: analiza la estructura de los datos, propone un esquema de contenido, genera el código completo del proyecto y lo despliega en un contenedor Docker accesible mediante una URL de previsualización.
+
+Para lograr este objetivo, WebBuilder integra tres tecnologías principales de forma coordinada. El backend Django actúa como núcleo del sistema, orquestando la ingestión de datos, la comunicación con los modelos de lenguaje y la generación del código. Los modelos de lenguaje de gran tamaño (LLM) son los responsables de analizar los datos de la API y producir el código Django adaptado a cada caso. Por último, n8n gestiona de forma asíncrona y las tareas de mayor duración, como el despliegue de los contenedores Docker o el envío de notificaciones al usuario.
+
+El resultado es un sistema que permite a cualquier usuario, independientemente de sus conocimientos técnicos, obtener un sitio web personalizado, funcional y desplegable a partir de una fuente de datos pública en cuestión de minutos.
+
+\section{Objetivos específicos}
+\label{sec:objetivos-especificos}
+
+El desarrollo de WebBuilder plantea una serie de objetivos específicos para las tareas principales en las que se ha dividido el trabajo. Estos objetivos recogen las funcionalidades concretas que el sistema debe cumplir y sirven como criterio de evaluación del grado de consecución del proyecto, retomados más adelante en el capítulo de conclusiones.
+
+\begin{itemize}
+	\item \textbf{Desarrollar un módulo de ingestión de datos} capaz de validar, descargar y procesar el contenido de cualquier API pública en los formatos más habituales: JSON, XML, CSV y GeoJSON.
+	\item \textbf{Integrar modelos de lenguaje} para el análisis automático de la estructura de los datos y la generación del código fuente de los proyectos Django, incluyendo modelos, vistas, plantillas e infraestructura de despliegue.
+	\item \textbf{Implementar un generador de proyectos Django} que produzca, a partir del esquema validado por el usuario, un proyecto Django completo, funcional y desplegable en siete pasos secuenciales coordinados por el LLM.
+	\item \textbf{Automatizar el despliegue de los proyectos generados} mediante contenedores Docker orquestados a través de flujos de trabajo en n8n, de forma que el usuario reciba una URL de previsualización del proyecto generado.
+	\item \textbf{Diseñar un sistema de trazabilidad y métricas} que registre cada llamada al LLM durante la generación, detecte inconsistencias en el código producido y proporcione un panel de análisis para evaluar el rendimiento del sistema.
+	\item \textbf{Ofrecer soporte multi-LLM y configuración personalizada}, permitiendo al usuario elegir entre un catálogo de modelos disponibles o conectar su propio proveedor mediante una clave de API cifrada.
+\end{itemize}
+
+\section{Planificación temporal} %Como se ha ido llevando el proyecto %
+\label{sec:planificacion-temporal}
+
+%A mí me gusta que aquí pongáis una descripción de lo que os ha llevado realizar el trabajo.
+%Hay gente que añade un diagrama de GANTT.
+%Lo importante es que quede claro cuánto tiempo llevas (tiempo natural, p.ej., 6 meses) y a qué nivel %de esfuerzo (p.ej., principalmente los fines de semana).
+
+El desarrollo de WebBuilder se ha llevado a cabo a lo largo de varios meses, compaginando siempre el proyecto con las clases presenciales de la universidad y trabajo durante algunos meses. La dedicación ha sido progresiva y desigual a lo largo del tiempo. Los primeros meses, julio y agosto de 2025, se dedicaron principalmente a la investigación de tecnologías y la implementación de la base funcional de la aplicación. 
+
+Durante septiembre y octubre el avance fue más limitado, ya que la mayor parte del tiempo disponible se destinó a las últimas asignaturas del grado, aunque se aprovechó para mejorar la parte visual de la aplicación y consolidar la base existente. Entre diciembre y enero el proyecto estuvo prácticamente parado debido al periodo de exámenes, lo que supuso un parón necesario pero que retrasó el desarrollo. El trabajo realmente intensivo comenzó en febrero de 2026, una vez finalizados los exámenes. A partir de ese momento la dedicación fue diaria, entre siete y ocho horas, salvo un par de días a la semana reservados para las clases presenciales. Esta fase concentró la mayor parte del desarrollo técnico del proyecto y fue donde se tomaron las decisiones más importantes de arquitectura e implementación.
+
+En cuanto a las reuniones con el tutor, se celebraron un total de xxx a lo largo del proyecto, manteniéndose un contacto periódico desde abril de 2025 hasta el cierre del desarrollo. A continuación se resume el contenido de cada reunión:
+
+\begin{itemize}
+	\item \textbf{Reunión 1 (Abril 2025):} Primera toma de contacto con el tutor. Se presentaron dos ideas iniciales, ambas descritas mas adelante la sección~\ref{sec:definicion-proyecto}
+
+	\item \textbf{Reunión 2 (Julio 2025):} Tras varios meses de reflexión, se acordó la propuesta definitiva del proyecto: una aplicación Django capaz de procesar los datos de cualquier API pública y generar automáticamente un sitio web personalizado. El enfoque era más amplio y con mayor potencial que las ideas anteriores.
+
+	\item \textbf{Reunión 3 (Julio 2025):} Se presentó la propuesta formal al tutor mediante un correo detallando las fases del sistema. Tras su aprobación se fueron implementando poco a poco.
+	
+	El tutor propuso incorporar un módulo de inteligencia artificial que sugiriera y generara el código Django de forma automatizada, lo que supuso el punto de inflexión más importante del proyecto y definió su enfoque final hacia la generación automática asistida por LLM.
+
+	\item \textbf{Reunión 4 (Octubre 2025):} Revisión de los avances realizados durante el verano y definición del rumbo del desarrollo. Se acordó una vez tenida la base elaborar un guion detallado de los procesos que debería seguir la plataforma para garantizar un desarrollo ordenado y bien estructurado.
+
+	\item \textbf{Reunión 5 (Octubre 2025):} Se presentó y revisó la lista de procesos definidos: validación de la URL introducida por el usuario, detección del formato de los datos devueltos por la API, análisis de la estructura del dataset y generación de un esquema preliminar. El tutor validó el enfoque y se continuó con el desarrollo.
+
+	\item \textbf{Reunión 6 (Febrero 2026):} Tras el parón de exámenes, se retomó el contacto con el tutor para verificar el estado del proyecto y aclarar dudas sobre el proceso de documentación y la elección de base de datos antes de comenzar la fase más intensa. El tutor me sugirió integrar Inteligencia Artificial como motor principal del análisis en lugar del sistema de reglas heurístico, decisión que marcaría el rumbo del desarrollo a partir de ese momento.
+	
+	\item \textbf{Reunión 7 (Febrero 2026):} Se mostraron los primeros avances significativos del proyecto: el asistente de IA funcionando correctamente con el sistema de mapping, y n8n integrado con los primeros workflows de notificación por correo al registrarse e iniciar sesión. Se resolvieron dudas sobre la base de datos y se validó el camino seguido.
+
+	\item \textbf{Reunión 8 (Marzo 2026):} Reunión previa a Semana Santa para mostrar los avances antes del descanso. En ese momento ya existían las primeras generaciones de páginas reales, aunque la mayoría presentaban errores frecuentes derivados de las alucinaciones del LLM y de la complejidad del generador en sus primeras versiones.
+
+	\item \textbf{Reunión 9 (Abril 2026):} Última reunión del proyecto, centrada principalmente en la memoria y en los últimos flecos de implementación pendientes. Se definieron los puntos finales a pulir antes de la entrega y se estableció el calendario de cierre del proyecto.
+\end{itemize}

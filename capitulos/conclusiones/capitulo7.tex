@@ -1,0 +1,72 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CONCLUSIONES %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\cleardoublepage
+\chapter{Conclusiones}
+\label{chap:conclusiones}
+
+En este capítulo se recogen las conclusiones obtenidas tras el desarrollo de WebBuilder. En primer lugar se evalúan los objetivos planteados al inicio del proyecto, analizando qué se ha logrado y qué limitaciones se han encontrado. A continuación se reflexiona sobre la aplicación de los conocimientos adquiridos durante el grado y las lecciones aprendidas a lo largo del desarrollo. Por último se proponen posibles líneas de trabajo futuro que podrían ampliar o mejorar el sistema en próximas iteraciones.
+
+\section{Consecución de objetivos}
+\label{sec:consecucion-objetivos}
+
+%Y si has llegado hasta aquí, siempre es bueno pasarle el corrector ortográfico, que las erratas quedan fatal en la memoria final. Para eso, en Linux tenemos aspell, que se ejecuta de la siguiente manera desde la línea de \emph{shell}:
+%
+%\begin{verbatim}
+%  aspell --lang=es_ES -c memoria.tex
+%\end{verbatim}
+
+Cabe destacar que una de las principales limitaciones encontradas durante el desarrollo ha sido la calidad visual de los sitios generados. La calidad que producen modelos de pago de alto rendimiento como GPT-4 o Claude no es alcanzable con los modelos gratuitos disponibles en los proveedores utilizados, y por más refinamiento aplicado en los prompts y en el sistema de presets visuales, llegar a ese nivel de calidad resulta considerablemente complejo sin acceso a modelos más potentes. Esta limitación es inherente al estado actual de los modelos gratuitos y no a la arquitectura del sistema en sí.
+
+\begin{itemize}
+  \item \textbf{Desarrollar un módulo de ingestión de datos.} Este objetivo se ha cumplido completamente. El módulo implementado en \texttt{utils/ingest/} es capaz de validar la URL introducida por el usuario, descargar el contenido de la API de forma segura y detectar automáticamente el formato de los datos. Los cuatro formatos contemplados en el objetivo, JSON, XML, CSV y GeoJSON, están soportados y producen una estructura Python homogénea que el resto del sistema consume de forma transparente, soportados también a traves de ficheros.
+  
+  \item \textbf{Integrar modelos de lenguaje para el análisis y la generación de código.} Este objetivo se ha cumplido completamente. El módulo \texttt{utils/llm/} implementa un cliente compatible con el estándar OpenAI que permite conectar con cualquier proveedor del mercado. Los modelos de lenguaje intervienen en seis de los siete pasos del generador, produciendo desde el modelo de datos Django hasta los templates HTML y el comando de carga de datos. Se han diseñado prompts específicos para cada paso tras muchas pruebas y refinamientos.
+  
+  \item \textbf{Implementar un generador de proyectos Django en siete pasos.} Este objetivo se ha cumplido completamente. El generador, implementado en \texttt{utils/generator/project\_generator.py}, produce un proyecto Django completo y desplegable a partir del esquema validado por el usuario. Cada paso tiene su propio prompt, su propio fallback de emergencia y su registro en el modelo \texttt{GenerationLog}, garantizando que el resultado siempre sea desplegable incluso cuando el LLM produce una respuesta de baja calidad.
+  
+  \item \textbf{Automatizar el despliegue mediante Docker y n8n.} Este objetivo se ha cumplido completamente. El workflow \textit{webbuilder-deploy} de n8n recibe la señal de Django mediante un webhook, construye la imagen Docker del proyecto generado, selecciona un puerto libre, arranca el contenedor y devuelve la URL de previsualización. Todo el proceso es transparente para el usuario, que recibe además una notificación por correo cuando su sitio está listo.
+  
+  \item \textbf{Diseñar un sistema de trazabilidad y métricas.} Este objetivo se ha cumplido completamente. El modelo \texttt{GenerationLog} registra cada llamada al LLM durante la generación, incluyendo el prompt enviado, la respuesta recibida, los errores detectados y si fue necesario un reintento. El verificador de consistencia \texttt{consistency\_checker.py} detecta referencias incorrectas entre ficheros antes del despliegue. El panel de métricas, accesible para administradores, toma esta información y muestra los datos a modo de dashboard.
+  
+  \item \textbf{Ofrecer soporte multi-LLM y configuración personalizada.} Este objetivo se ha cumplido completamente. El catálogo de modelos definido en \texttt{utils/llm/llm\_catalog.py} ofrece al usuario tres modelos preconfigurados con sus ventajas e inconvenientes. Además, el modelo \texttt{UserProfile} permite a cualquier usuario conectar su propio proveedor OpenAI-compatible introduciendo su URL base, el identificador del modelo y su clave de API, que se almacena cifrada en base de datos mediante \texttt{EncryptedCharField}.
+\end{itemize}
+
+
+\section{Aplicación de lo aprendido}
+\label{sec:aplicacion}
+
+Durante el desarrollo de WebBuilder se han puesto en práctica numerosos conocimientos adquiridos a lo largo del Grado en Ingeniería Telemática. A continuación se detallan las asignaturas más directamente relacionadas con el proyecto:
+
+\begin{enumerate}
+  \item \textbf{Programación de Sistemas de Telecomunicación:} Esta asignatura proporcionó la base de programación en Python que ha sido el lenguaje principal del proyecto. Los conocimientos adquiridos sobre estructuras de datos, funciones, módulos y manejo de ficheros han sido esenciales para desarrollar toda la lógica del backend, desde el módulo de ingestión hasta el generador de proyectos.
+  
+  \item \textbf{Laboratorio de Bases de Datos:} Los conceptos de modelado relacional, consultas y gestión de datos aprendidos en esta asignatura han sido fundamentales para diseñar los modelos de Django, gestionar las migraciones y buscar información concreta en PostgreSQL.
+  
+  \item \textbf{Aplicaciones Telemáticas:} Esta asignatura introdujo el desarrollo web con HTML, CSS y JavaScript, tecnologías que conforman toda la capa de presentación de WebBuilder. Además, los conceptos de contenedores y entornos de ejecución aislados trabajados en esta asignatura sentaron las bases para comprender y aplicar Docker en el despliegue de los proyectos generados.
+  
+  \item \textbf{Servicios Telemáticos:} El framework Django, utilizado como núcleo del sistema, fue introducido en esta asignatura. El manejo de peticiones, respuestas, rutas y vistas que se aplica en WebBuilder bebe directamente de los conocimientos adquiridos aquí, así como la comprensión del modelo cliente-servidor sobre el que se construye toda la plataforma.
+  
+  \item \textbf{Seguridad en Redes de Ordenadores:} Los conocimientos sobre seguridad y cifrado adquiridos en esta asignatura han sido aplicados directamente en la protección de las claves de API de los proveedores LLM, almacenadas cifradas en base de datos mediante \texttt{EncryptedCharField}, evitando que se guarden en texto plano.
+  
+  \item \textbf{Sistemas Operativos:} Aunque esta asignatura se centró en programación en C y conceptos de bajo nivel como procesos, kernel y gestión de recursos, esos fundamentos han facilitado la comprensión del funcionamiento interno de Docker: la gestión de contenedores, la asignación de puertos y el aislamiento de procesos en el sistema anfitrión.
+\end{enumerate}
+
+Este proyecto a ayudado integrar y aplicar de forma práctica los conocimientos adquiridos a lo largo del grado, demostrando que las competencias desarrolladas en cada asignatura no son independientes sino que se complementan y convergen en un proyecto real de ingeniería.
+
+\section{Lecciones aprendidas}
+\label{sec:lecciones_aprendidas}
+
+
+
+
+\section{Trabajos futuros}
+\label{sec:trabajos_futuros}
+
+Ningún proyecto ni software se termina, así que aquí vienen ideas y funcionalidades que estaría bien tener implementadas en el futuro.
+
+Es un apartado que sirve para dar ideas de cara a futuros TFGs/TFMs.
+
+

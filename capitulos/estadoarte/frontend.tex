@@ -28,6 +28,28 @@ Tailwind CSS~\cite{tailwind_docs} es un framework de hojas de estilo basado en e
 
 Este enfoque ofrece varias ventajas prácticas. En primer lugar, evita el problema de los estilos huérfanos y la acumulación de CSS no utilizado, ya que cada clase aplicada está explícitamente presente en el marcado. En segundo lugar, permite un control fino sobre el diseño sin necesidad de sobrescribir estilos predefinidos, lo que reduce la complejidad del CSS final. Por último, su sistema de diseño coherente con escalas predefinidas para espaciados, colores, tipografías y puntos de ruptura responsivos favorece la consistencia visual entre componentes.
 
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+    \hline
+    & \textbf{Tailwind CSS} & \textbf{Bootstrap} & \textbf{CSS puro} \\
+    \hline
+    \textbf{Forma de trabajar} & Se aplican clases pequeñas directamente en el HTML & Se usan componentes visuales ya construidos & Se escriben estilos manualmente en ficheros .css \\
+    \hline
+    \textbf{Personalización} & Total, sin restricciones & Limitada por el diseño de cada componente & Total, sin restricciones \\
+    \hline
+    \textbf{Curva de aprendizaje} & Media & Baja & Alta \\
+    \hline
+    \textbf{Estilos sin usar} & Mínimos, solo se carga lo que se usa & Elevados, se carga el framework completo & Depende del desarrollador \\
+    \hline
+    \textbf{Generación por LLM} & Natural y consistente, ampliamente representado en los datos de entrenamiento & Inconsistente, el modelo tiende a mezclar versiones & Impredecible, el modelo inventa nombres de clase sin referencia \\
+    \hline
+\end{tabular}
+\caption{Comparativa entre los principales enfoques de estilos CSS}
+
+\label{tab:comparativa-css}
+\end{table}
+
 Tailwind se ha convertido en una de las opciones más populares para proyectos 
 web modernos~\cite{stackoverflow_survey_2025}, y su naturaleza declarativa encaja 
 especialmente bien con la generación automática de interfaces por parte de modelos 
