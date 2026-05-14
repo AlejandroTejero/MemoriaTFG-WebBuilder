@@ -59,14 +59,37 @@ Este proyecto a ayudado integrar y aplicar de forma práctica los conocimientos 
 \section{Lecciones aprendidas}
 \label{sec:lecciones_aprendidas}
 
+El desarrollo de WebBuilder ha supuesto el aprendizaje de varias tecnologías que no formaban parte de la carrera. Entre ellas destacan:
 
-
+\begin{enumerate}
+  \item \textbf{Automatización de flujos con n8n:} El uso de n8n para orquestar flujos de trabajo asíncronos ha sido un aprendizaje completamente nuevo. Aprender a diseñar workflows con nodos, configurar webhooks, gestionar errores en cada paso y conectar servicios externos.
+   
+  \item \textbf{Integración de modelos de lenguaje mediante APIs:} Conectar el sistema a proveedores de LLM como Groq, OpenRouter o NVIDIA NIM, gestionar sus límites de uso, interpretar sus respuestas y manejar sus fallos, asi como aprender a manejar el estándar OpenAI.
+  
+  \item \textbf{Ingeniería de prompts:} El diseño, prueba y refinamiento de prompts efectivos necesarios durante el proyecto. Aprender a formular instrucciones precisas, cómo estructurar el contexto que se le pasa al modelo y cómo proteger el sistema frente a respuestas inesperadas ha requerido un proceso largo de experimentación.
+  
+  \item \textbf{Tailwind CSS:} El uso de Tailwind como sistema de estilos para los proyectos generados, ha sido aprendido íntegramente durante el proyecto. Su compatibilidad natural con la generación por LLM lo han convertido en una herramienta indispensable de la generación.
+  
+  \item \textbf{Gestión autónoma de un proyecto de software:} Llevar un proyecto de esta envergadura de forma completamente autónoma, realizando investigación, tomando decisiones de arquitectura, investigando y añadiendo funcionalidades, organizando y realizando refactors cuando era necesario.
+  
+  \item \textbf{Redacción técnica con \LaTeX:} La elaboración de esta memoria ha supuesto aprender a trabajar con \LaTeX\ desde cero, incluyendo la gestión de referencias, figuras, tablas y la estructura general de un documento técnico académico.
+\end{enumerate}
 
 \section{Trabajos futuros}
 \label{sec:trabajos_futuros}
 
-Ningún proyecto ni software se termina, así que aquí vienen ideas y funcionalidades que estaría bien tener implementadas en el futuro.
+Aunque WebBuilder cumple con los objetivos planteados, existen alguna lineas de mejora y ampliación. A continuación se proponen las mas relevantes, tanto mejoras técnicas del sistema como posibles funcionalidades.
 
-Es un apartado que sirve para dar ideas de cara a futuros TFGs/TFMs.
-
-
+\begin{enumerate}
+  \item \textbf{Mejora de la calidad visual de los sitios generados:} La principal línea de trabajo futuro es mejorar la calidad visual de los proyectos generados. Esto pasa por incorporar modelos de mayor capacidad y ampliar la librería de ejemplos few-shot con más variantes de estilo.
+  
+  \item \textbf{Validación automática del código generado:} Actualmente el sistema detecta inconsistencias entre ficheros pero no ejecuta el proyecto antes de desplegarlo. Una mejora sería lanzar el proyecto en un contenedor efímero tras la generación, verificar que responde HTTP 200 y solo entonces marcarlo como listo, cerrando el ciclo de calidad de forma completamente automática.
+  
+  \item \textbf{Soporte para más formatos de entrada:} Además de URLs de APIs públicas, sería interesante permitir al usuario usar APIs o ficheros en cualquier formato, ampliando así las fuentes de datos que el sistema puede procesar.
+  
+  \item \textbf{Comparador de modelos LLM:} Permitir lanzar la misma generación con dos modelos distintos en paralelo y comparar los resultados sería una funcionalidad muy potente, tanto para el usuario final como para el análisis interno del sistema.
+  
+  \item \textbf{Galería pública de proyectos generados:} Implementar una sección donde los usuarios puedan marcar sus proyectos como públicos y compartirlos en una galería con el tipo de sitio, la API de origen y una captura visual. Convirtiendo asi WebBuilder en una herramienta social añadiendo interactividad y aumentando su potencial.
+  
+  \item \textbf{Sistema de autenticación con proveedores externos:} Incorporar la posibilidad de iniciar sesión con Google u otros proveedores mediante OAuth, simplificando el acceso a la plataforma y mejorando la experiencia de usuario.
+\end{enumerate}

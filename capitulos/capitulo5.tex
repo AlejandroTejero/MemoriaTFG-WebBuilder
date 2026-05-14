@@ -8,8 +8,144 @@
 \chapter{Experimentos y validación}
 \label{chap:experimentos}
 
-Este capítulo se introdujo como requisito en 2019. 
-Describe los experimentos y casos de test que tuviste que implementar para validar tus resultados. 
-Incluye también los resultados de validación que permiten afirmar que tus resultados son correctos. 
+%Este capítulo se introdujo como requisito en 2019. 
+%Describe los experimentos y casos de test que tuviste que implementar para validar tus resultados. 
+%Incluye también los resultados de validación que permiten afirmar que tus resultados son correctos. 
+
+\subsection{Metodoloǵia de validación}
+\label{subsec:metodologia-validacion}
+
+La validación de WebBuilder se ha llevado a cabo mediante la generación de casos de uso reales, utilizando APIs públicas de distinta naturaleza y complejidad. El objetivo no ha sido medir la perfección de un resultado concreto, sino evaluar la capacidad del sistema para producir proyectos Django funcionales, desplegables y visualmente coherentes a partir de cualquier fuente de datos.
+
+Para cada caso de uso se han evaluado los siguientes criterios:
+
+\begin{itemize}
+	\item \textbf{Funcionalidad:} el proyecto generado arranca correctamente, carga los datos de la API y las páginas responden sin errores HTTP.
+	
+	\item \textbf{Coherencia del modelo de datos:} los campos detectados por el sistema corresponden a los datos reales de la API y el modelo Django generado los representa correctamente.
+	
+	\item \textbf{Calidad del código generado:} el código producido por el LLM es sintácticamente correcto, no contiene campos inexistentes y supera la verificación de consistencia del sistema.
+	
+	\item \textbf{Calidad visual:} el sitio generado tiene una apariencia coherente con el tipo de contenido, los presets visuales se aplican correctamente y la navegación entre páginas funciona.
+	
+	\item \textbf{Despliegue automático:} el workflow de n8n completa el proceso de build y arranque del contenedor Docker sin intervención manual, devolviendo una URL de previsualización accesible.
+\end{itemize}
+
+Además de los casos de uso, se ha realizado un análisis de los errores ocurridos en el proceso de desarrollo, categorizados por tipo y documentados con su causa, consecuencia y solución aplicada, que se recoge en la Sección~\ref{sec:analisis-errores}.
 
 
+\subsection{Casos de uso}
+\label{subsec:casos-uso}
+
+\subsection{Análisis de errores}
+\label{subsec:analisis-errores}
+
+Durante el proceso de desarrollo y pruebas de WebBuilder se identificaron y documentaron de forma sistemática los principales errores que afectaban a la calidad de las generaciones. Estos errores se agrupan en dos categorías: limitaciones impuestas por los propios modelos de lenguaje y errores en el código generado por el LLM.
+
+\subsubsection{Errores de limitación del LLM}
+\label{subsubsec:errores-llm}
+
+La primera categoría de errores está relacionada con los límites de uso de los proveedores de modelos, que condicionan directamente el comportamiento del sistema durante la generación.
+
+
+\textbf{Error HTTP 429 — Rate Limit Exceeded.} El error más frecuente durante las pruebas fue la superación del límite de tokens por minuto del modelo. El prompt del paso de generación de templates es especialmente grande, ya que incluye el prompt enriquecido, los campos del modelo, los datos de ejemplo y un fragmento HTML de referencia. Cuando este prompt superaba los tokens disponibles en el minuto en curso, la llamada fallaba y el template afectado caía al fallback vacío, generando una página en blanco. La solución aplicada fue reducir el tamaño máximo del prompt enriquecido, eliminar los datos de ejemplo del paso de estructura de páginas y truncar el ejemplo HTML de referencia a 1500 caracteres.
+
+\textbf{Error HTTP 413 — Request Entity Too Large.} Algunos modelos como \texttt{groq/compound} rechazan peticiones que superan un cierto tamaño en bytes antes de procesarlas, independientemente del límite de TPM. Este error afectaba prácticamente a todos los pasos de la generación, dejando el proyecto resultante vacío o lleno de fallbacks. La solución fue descartar este modelo del catálogo recomendado y sustituirlo por \texttt{meta-llama/llama-4-scout-17b-16e-instruct}, que ofrece 30K TPM sin restricciones de tamaño de petición.
+
+\textbf{Timeout por \texttt{time.sleep} excesivo.} Durante las pruebas se intentó evitar el error 429 aumentando el tiempo de espera entre llamadas al LLM hasta 60 segundos. El resultado fue que el servidor web cortaba la conexión por timeout antes de que terminara la generación. La conclusión fue que el sleep no debe superar los 20 segundos y que la solución correcta al problema de TPM es reducir el tamaño de los prompts, no aumentar la espera entre llamadas.
+
+
+En la Tabla~\ref{tab:modelos-groq} se recoge la comparativa de modelos evaluados en Groq durante las pruebas, con sus límites y observaciones:
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{6cm}|l|l|p{4cm}|}
+	\hline
+	\textbf{Modelo} & \textbf{TPM} & \textbf{RPD} & \textbf{Observaciones} \\
+	\hline
+	\texttt{groq/compound} & 70K & Sin límite & Límite de tamaño de request muy restrictivo. No recomendado. \\
+	\hline
+	\texttt{openai/gpt-oss-120b} & 8K & 200K & Buena calidad pero TPM muy bajo. Falla en prompts grandes. \\
+	\hline
+	\texttt{llama-3.3-70b-versatile} & 12K & 100K & Aceptable pero con menos margen. \\
+	\hline
+	\texttt{llama-4-scout-17b-16e} & 30K & 500K & Recomendado. Buen equilibrio calidad/límites. \\
+	\hline
+\end{tabular}
+\caption{Comparativa de modelos evaluados en Groq}
+\label{tab:modelos-groq}
+\end{table}
+
+
+\subsubsection{Errores en el código generado}
+\label{subsubsec:errores-codigo}
+
+
+\subsection{Errores en el código generado}
+\label{subsec:errores-codigo}
+
+La segunda categoría agrupa los errores producidos por el propio LLM al generar el código del proyecto, independientemente de los límites del proveedor.
+
+\textbf{Acceso a subcampos de objetos anidados.} Cuando el dataset contiene campos que son objetos anidados, como \texttt{origin: {name: Earth'', url: ...''}}, el LLM tiende a tratarlos como objetos Django en el template usando la sintaxis \texttt{{{ item.origin.name }}}. Sin embargo, el modelo Django almacena ese campo como un \texttt{CharField} simple con solo el valor del nombre. El resultado es un error en tiempo de ejecución al intentar acceder a \texttt{.name} sobre un string. Este error es especialmente difícil de detectar automáticamente porque el verificador de consistencia solo comprueba que el primer nivel de campo exista en el modelo.
+
+\textbf{URLs hardcodeadas incorrectas en templates.} El LLM tiende a usar nombres de URL genéricos como \texttt{detail} o \texttt{catalog} en las etiquetas \texttt{url} aunque el prompt le indique los nombres exactos. Esto provoca errores \texttt{NoReverseMatch} en tiempo de ejecución. La solución aplicada fue añadir una validación en \texttt{check\_django\_syntax} que comprueba que todos los nombres de URL usados en los templates corresponden a URLs reales del proyecto.
+
+\textbf{\texttt{json.loads} sobre un dict ya parseado.} Cuando el dataset tiene campos anidados, el LLM a veces genera en \texttt{load\_data.py} llamadas a \texttt{json.loads()} sobre campos que ya han sido deserializados por \texttt{response.json()}. El resultado es un \texttt{json.JSONDecodeError} que hace que todos los items fallen silenciosamente y no se cargue ningún dato en la base de datos.
+
+\textbf{Variables de contexto inconsistentes entre view y template.} En ocasiones el LLM usa nombres semánticamente descriptivos en la view, como \texttt{featured} o \texttt{recent}, en lugar del nombre estándar \texttt{items} que usan los templates. El resultado es que la página aparece vacía aunque haya datos en la base de datos. La solución fue reforzar en los prompts de generación que la variable del contexto debe llamarse siempre \texttt{items}.
+
+\textbf{Paginación no implementada en APIs paginadas.} Cuando la API devuelve los datos paginados, el \texttt{load\_data.py} generado por defecto solo hace una petición a la URL base, cargando únicamente la primera página de resultados. Esto puede suponer cargar 20 items de una API que tiene 800, sin que el sistema lo detecte como un error.
+
+
+\section{Métricas del sistema}
+\label{sec:metricas-sistema}
+
+WebBuilder incorpora un panel de métricas accesible unicamente para administradores que recopila datos en tiempo real sobre el funcionamiento del sistema. Esta sección presenta los resultados extraídos del panel tras el uso de la pagina, que permiten evaluar de forma objetiva tanto el rendimiento como la fiabilidad de la plataforma.
+
+El panel se estructura en seis vistas independientes (Resumen, Actividad, LLM, Alertas, Usuarios y Generaciones), cada una enfocada en un aspecto distinto del sistema. Tanto los datos numéricos como las capturas que se muestran a continuación corresponden a una instantánea del sistema en el momento de redactar esta memoria, por lo que pueden no coincidir exactamente con los valores actuales en el momento de la lectura.
+
+\subsection{Resumen general}
+\label{subsec:metricas-resumen}
+
+El sistema acumula 67 análisis de APIs realizados, de los cuales 61 han sido generados con éxito. Esto supone una tasa de éxito del análisis del 95.5\% y una conversión análisis-a-sitio del 91\%, lo que indica que el flujo completo desde la ingesta de datos hasta la generación final es estable y fiable. La tasa de reintentos del LLM se mantiene en el 0\%, dentro del rango esperado para los modelos seleccionados como recomendados tras los ajustes descritos en la Sección~\ref{subsec:errores-llm}.
+
+\subsection{Actividad y patrones de uso}
+\label{subsec:metricas-actividad}
+
+El panel de actividad muestra la evolución de los análisis y las generaciones en los últimos 30 días. Se observan picos de uso en los periodos de desarrollo de mejora de visualizacion, alcanzando hasta 15 análisis en un mismo.
+
+En cuanto a los formatos de entrada utilizados, el 95\% de los análisis se han realizado a partir de URLs de APIs públicas, siendo el 5\% restante análisis de ficheros locales.
+
+La distribución de llamadas al LLM depende del tipo de ficheros: los pasos de generación de templates, modelos, carga de datos, vistas y plantilla base concentran 56 llamadas cada uno, mientras que los templates específicos de catálogo y detalle bajan a 26 y 23 respectivamente. 
+
+Esto se debe a que estos últimos solo se generan cuando el tipo de sitio elegido los requiere, mientras que los anteriores son comunes a cualquier proyecto generado.
+
+\subsection{Rendimiento de los modelos LLM}
+\label{subsec:metricas-llm}
+
+El sistema acumula 456 llamadas totales al LLM, repartidas entre los cuatro modelos evaluados. La distribución refleja claramente las decisiones tomadas durante el desarrollo:
+
+\begin{itemize}
+	\item \texttt{meta-llama/llama-4-scout-17b-16e-instruct}: 370 llamadas (81.1\%)
+	\item \texttt{llama-3.3-70b-versatile}: 61 llamadas (13.4\%)
+	\item \texttt{groq/compound-mini}: 16 llamadas (3.5\%)
+	\item \texttt{groq/compound}: 9 llamadas (1.9\%)
+\end{itemize}
+
+El modelo \texttt{llama-4-scout} acumula la inmensa mayoría de las llamadas tras ser el modelo mas adecuado por su equilibrio entre calidad y límites de TPM, mientras que \texttt{groq/compound} fue descartado tras detectar el problema de tamaño máximo de petición. 
+
+La tasa de errores de consistencia es del 0\% en todos los modelos, lo que valida la eficacia del sistema de verificación de código generado descrito en la Sección~\ref{subsec:errores-codigo}.
+
+El número medio de llamadas por sitio generado es de 7.5, coherente con los 7 pasos del generador más alguna llamada adicional de validación.
+
+\subsection{Alertas y estabilidad}
+\label{subsec:metricas-alertas}
+
+El panel de alertas detecta incidencias del sistema como generaciones bloqueadas, análisis pendientes o errores recientes. En el momento de la captura no había alertas activas ni errores registrados en las últimas 24 horas.
+
+\subsection{Usuarios y proyectos generados}
+\label{subsec:metricas-usuarios}
+
+La plataforma cuenta con 4 usuarios registrados, todos ellos con al menos un sitio generado. La distribución de actividad muestra que el usuario \texttt{admin} concentra 52 análisis y 47 sitios generados (lo esperable dado que es la cuenta de pruebas principal), seguido por \texttt{Alejandro} con 9 análisis y 9 sitios, y los usuarios \texttt{Pruebasn8n} y \texttt{pruebas2} con volúmenes menores asociados a pruebas específicas.
+
+El panel de generaciones muestra el listado completo de proyectos creados con su estado, nombre, usuario propietario, número de ficheros y antigüedad. Todos los proyectos listados se encuentran en estado \emph{ready}, lo que indica que su contenedor Docker está disponible y accesible mediante su URL de previsualización.
