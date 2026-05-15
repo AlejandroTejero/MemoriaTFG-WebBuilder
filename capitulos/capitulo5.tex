@@ -8,9 +8,7 @@
 \chapter{Experimentos y validación}
 \label{chap:experimentos}
 
-%Este capítulo se introdujo como requisito en 2019. 
-%Describe los experimentos y casos de test que tuviste que implementar para validar tus resultados. 
-%Incluye también los resultados de validación que permiten afirmar que tus resultados son correctos. 
+En este capítulo se describe el proceso de validación de WebBuilder, comprobando que el sistema cumple con los objetivos planteados al inicio del proyecto. Se presenta la metodología seguida, los casos de uso reales generados con la plataforma, el análisis de los errores detectados durante el desarrollo y las métricas del sistema obtenidas tras varias semanas de uso.
 
 \subsection{Metodoloǵia de validación}
 \label{subsec:metodologia-validacion}
@@ -80,10 +78,6 @@ En la Tabla~\ref{tab:modelos-groq} se recoge la comparativa de modelos evaluados
 \subsubsection{Errores en el código generado}
 \label{subsubsec:errores-codigo}
 
-
-\subsection{Errores en el código generado}
-\label{subsec:errores-codigo}
-
 La segunda categoría agrupa los errores producidos por el propio LLM al generar el código del proyecto, independientemente de los límites del proveedor.
 
 \textbf{Acceso a subcampos de objetos anidados.} Cuando el dataset contiene campos que son objetos anidados, como \texttt{origin: {name: Earth'', url: ...''}}, el LLM tiende a tratarlos como objetos Django en el template usando la sintaxis \texttt{{{ item.origin.name }}}. Sin embargo, el modelo Django almacena ese campo como un \texttt{CharField} simple con solo el valor del nombre. El resultado es un error en tiempo de ejecución al intentar acceder a \texttt{.name} sobre un string. Este error es especialmente difícil de detectar automáticamente porque el verificador de consistencia solo comprueba que el primer nivel de campo exista en el modelo.
@@ -107,7 +101,14 @@ El panel se estructura en seis vistas independientes (Resumen, Actividad, LLM, A
 \subsection{Resumen general}
 \label{subsec:metricas-resumen}
 
-El sistema acumula 67 análisis de APIs realizados, de los cuales 61 han sido generados con éxito. Esto supone una tasa de éxito del análisis del 95.5\% y una conversión análisis-a-sitio del 91\%, lo que indica que el flujo completo desde la ingesta de datos hasta la generación final es estable y fiable. La tasa de reintentos del LLM se mantiene en el 0\%, dentro del rango esperado para los modelos seleccionados como recomendados tras los ajustes descritos en la Sección~\ref{subsec:errores-llm}.
+El sistema acumula 67 análisis de APIs realizados, de los cuales 61 han sido generados con éxito. Esto supone una tasa de éxito del análisis del 95.5\% y una conversión análisis-a-sitio del 91\%, lo que indica que el flujo completo desde la ingesta de datos hasta la generación final es estable y fiable. La tasa de reintentos del LLM se mantiene en el 0\%, dentro del rango esperado para los modelos seleccionados como recomendados tras los ajustes descritos en la Sección~\ref{subsec:metricas-llm}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/resumen.png}
+    \caption{Panel de Resumen general del sistema}
+    \label{fig:metricas-resumen}
+\end{figure}
 
 \subsection{Actividad y patrones de uso}
 \label{subsec:metricas-actividad}
@@ -119,6 +120,13 @@ En cuanto a los formatos de entrada utilizados, el 95\% de los análisis se han 
 La distribución de llamadas al LLM depende del tipo de ficheros: los pasos de generación de templates, modelos, carga de datos, vistas y plantilla base concentran 56 llamadas cada uno, mientras que los templates específicos de catálogo y detalle bajan a 26 y 23 respectivamente. 
 
 Esto se debe a que estos últimos solo se generan cuando el tipo de sitio elegido los requiere, mientras que los anteriores son comunes a cualquier proyecto generado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/actividad.png}
+    \caption{Panel de actividad y patrones de uso}
+    \label{fig:metricas-actividad}
+\end{figure}
 
 \subsection{Rendimiento de los modelos LLM}
 \label{subsec:metricas-llm}
@@ -138,14 +146,42 @@ La tasa de errores de consistencia es del 0\% en todos los modelos, lo que valid
 
 El número medio de llamadas por sitio generado es de 7.5, coherente con los 7 pasos del generador más alguna llamada adicional de validación.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/llm.png}
+    \caption{Panel de rendimiento de los modelos LLM}
+    \label{fig:metricas-llm}
+\end{figure}
+
 \subsection{Alertas y estabilidad}
 \label{subsec:metricas-alertas}
 
 El panel de alertas detecta incidencias del sistema como generaciones bloqueadas, análisis pendientes o errores recientes. En el momento de la captura no había alertas activas ni errores registrados en las últimas 24 horas.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/alertas.png}
+    \caption{Panel de alertas del sistema}
+    \label{fig:metricas-alertas}
+\end{figure}
 
 \subsection{Usuarios y proyectos generados}
 \label{subsec:metricas-usuarios}
 
 La plataforma cuenta con 4 usuarios registrados, todos ellos con al menos un sitio generado. La distribución de actividad muestra que el usuario \texttt{admin} concentra 52 análisis y 47 sitios generados (lo esperable dado que es la cuenta de pruebas principal), seguido por \texttt{Alejandro} con 9 análisis y 9 sitios, y los usuarios \texttt{Pruebasn8n} y \texttt{pruebas2} con volúmenes menores asociados a pruebas específicas.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/usuarios.png}
+    \caption{Panel de metricas sobre usuarios}
+    \label{fig:metricas-usuarios}
+\end{figure}
+
 El panel de generaciones muestra el listado completo de proyectos creados con su estado, nombre, usuario propietario, número de ficheros y antigüedad. Todos los proyectos listados se encuentran en estado \emph{ready}, lo que indica que su contenedor Docker está disponible y accesible mediante su URL de previsualización.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/generaciones.png}
+\caption{Panel de historial de generaciones de la plataforma}
+\label{fig:metricas-generaciones}
+\end{figure}
