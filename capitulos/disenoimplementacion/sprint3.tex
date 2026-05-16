@@ -1,7 +1,7 @@
-\section{Fase 3: Integracion LLM y n8n}
+\section{Sprint 3: Integracion LLM y n8n}
 \label{sec:integracion-llm-n8n}
 
-Con la fase 2 terminada y viendo que las limitaciones eran evidentes, se tomó la decisión de realizar un cambio fundamental para el futuro del proyecto. Se abandonó 
+Con el sprint 2 terminada y viendo que las limitaciones eran evidentes, se tomó la decisión de realizar un cambio fundamental para el futuro del proyecto. Se abandonó 
 la idea del sistema de reglas, aunque no en la totalidad, ya que algunas partes nos seguirían siendo útiles. Se decidió integrar un
 modelo de lenguaje (LLM) como núcleo o motor del análisis y generación de las páginas. Hasta este momento el sistema intentaba entender los datos mediante
 puntuaciones y comparaciones. A partir de este punto, se decidió que fuese la Inteligencia Artificial la encargada de escoger y proponer la estructura del sitio y decidiera que 
@@ -47,6 +47,14 @@ La función mencionada anteriormente acepta tres parámetros principales:
 El primer proveedor utilizado fue OpenRouter, con el modelo de meta-llama: \\
 \texttt{llama-3.3-70b-instruct:free}, de acceso gratuito y potencia más que suficiente para las primeras pruebas.
 
+% Meter captura de ejemplo de prompt
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/webbuilder/disenoimplementacion/logs-generacion.png}
+    \caption{Ejemplo logs de generación de proyecto}
+    \label{fig:Ejemplo logs de generacion}
+\end{figure}
 
 \subsection{Planner schema}
 \label{subsec:planner-schema}
@@ -101,10 +109,10 @@ de la respuesta, los cuales rompían el flujo de ejecución del proyecto.
 
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{img/webbuilder/disenoimplementacion/asistente-schema.png}
-\caption{Schema generado automáticamente por el LLM a partir de la API analizada}
-\label{fig:asistente-schema}
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/disenoimplementacion/asistente-schema.png}
+    \caption{Schema generado automáticamente por el LLM a partir de la API analizada}
+    \label{fig:asistente-schema}
 \end{figure}
 
 \subsection{Protección anti-alucinaciones}
@@ -142,7 +150,7 @@ Si el parseo falla, el sistema reintenta automáticamente una vez con una pista 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.4\textwidth]{img/disenoimplementacion/flujourlfase3}
-    \caption{Flujo de ingestión y análisis: de URL a schema}
+    \caption{Flujo de ingestión y análisis}
     \label{fig:flujo-url-schema}
 \end{figure}
 
@@ -174,14 +182,14 @@ Tabla~\ref{tab:modelo-generatedsite}.
         project\_files & JSONField & Ficheros del proyecto generado indexados por ruta \\
         \hline
     \end{tabular}
-    \caption{Campos principales del modelo GeneratedSite en la Fase 3}
+    \caption{Campos principales del modelo GeneratedSite en el sprint 3}
     \label{tab:modelo-generatedsite}
 \end{table}
 
 \subsection{Integración de n8n}
 \label{subsec:integracion-n8n}
 
-En paralelo a la integración del LLM, durante esta fase se incorporó n8n al sistema por primera vez. Es una herramienta de automatización de flujos que permite conectar servicios mediante webhooks y nodos, y que más adelante sería una pieza fundamental de la arquitectura del proyecto. En este momento su uso fue todavía inicial: instalar el entorno y crear el primer flujo de pruebas.
+En paralelo a la integración del LLM, durante este sprint se incorporó n8n al sistema por primera vez. Es una herramienta de automatización de flujos que permite conectar servicios mediante webhooks y nodos, y que más adelante sería una pieza fundamental de la arquitectura del proyecto. En este momento su uso fue todavía inicial: instalar el entorno y crear el primer flujo de pruebas.
 
 n8n se instaló en un contenedor Docker siguiendo la imagen oficial, quedando disponible en \texttt{localhost:5678}. Una vez levantado el entorno, se creó el primer flujo en n8n y se configuró el primer webhook, apuntando a la ruta \texttt{/webhook-test/WebBuilder-Register}. El prefijo \texttt{webhook-test} indica que el webhook estaba en modo de prueba, el modo que n8n ofrece para verificar que el flujo funciona correctamente antes de activarlo en producción.
 
@@ -191,3 +199,9 @@ personalizado a esa dirección. Más adelante se completaría el flujo con el we
 La función estaba diseñada para ser completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente y el registro continuaba con normalidad. Esto garantizaba que un fallo en el sistema de notificaciones nunca pudiera bloquear el acceso a la aplicación.
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/n8n/login-register.png}
+    \caption{Flujo n8n login y register}
+    \label{fig:Flujo n8n login y register}
+\end{figure}

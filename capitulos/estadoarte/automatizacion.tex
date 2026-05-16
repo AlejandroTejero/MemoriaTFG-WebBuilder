@@ -1,7 +1,7 @@
 \section{Automatización e infraestructura}
 \label{sec:auto}
 
-WebBuilder no solo se apoya en el backend de Django y Python, tambien se usan herramientas externas para la automatizacion de tareas y el despliegue de los proyectos. En esta sección se describen las herramientas de n8n, encargado de orquestar los flujos asíncronos de la plataforma, y de Docker, que proporciona el entorno aislado en el que se ejecutan los proyectos generados.
+WebBuilder no solo se apoya en el backend de Django y Python, tambien se usan herramientas externas para la automatizacion de tareas y el despliegue de los proyectos. En esta sección se describe la herramienta n8n, encargada de orquestar los flujos asíncronos de la plataforma, y de Docker, que proporciona el entorno aislado en el que se ejecutan los proyectos generados.
 
 
 \subsection{n8n}
@@ -34,6 +34,14 @@ el envío de correos automáticos al registrarse o iniciar sesión, la notificac
 A diferencia de plataformas similares, n8n puede autoalojarse, lo que permite ejecutarlo en infraestructura propia y mantener el control completo sobre los datos y las credenciales, como ocurre en este proyecto donde se ejecuta en un contenedor Docker local.
 
 La comunicación entre WebBuilder y n8n se basa en el patrón \textit{webhook}: una llamada HTTP que un sistema realiza hacia otro para notificar que ha ocurrido un evento, sin esperar una respuesta inmediata. A diferencia de una llamada síncrona, donde el proceso queda bloqueado hasta recibir el resultado, un webhook permite que el sistema emisor continúe su ejecución mientras el receptor procesa la tarea de forma independiente~\cite{webhook_patterns}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{img/n8n/interfaz.png}
+    \caption{Interfaz principal de n8n}
+    \label{fig:interfaz n8n}
+\end{figure}
+
 
 \subsection{Docker}
 \label{subsec:docker}

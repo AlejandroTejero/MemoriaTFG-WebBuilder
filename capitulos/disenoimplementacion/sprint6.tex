@@ -1,14 +1,14 @@
-\section{Fase 6: Funcionalidades avanzadas}
+\section{Sprint 6: Funcionalidades avanzadas}
 \label{sec:funcionalidades-avanzadas}
 
 Una vez concluida una buena base del sistema de generación y despliegue, 
-esta fase se dedicó a implementar funcionalidades que ampliaban las 
+este sprint se dedicó a implementar funcionalidades que ampliaban las 
 capacidades del sistema en cinco direcciones: versiones de proyectos generados, la gestión de usuarios de cada sitio, la ampliación de los formatos de entrada soportados, la mejora de la calidad visual de los templates mediante ejemplos few-shot, y la posibilidad de configurar un LLM personalizado por usuario.
 
 \subsection{Nuevos formatos de entrada: CSV y GeoJSON}
 \label{subsec:nuevos-formatos-entrada}
 
-Hasta este momento el módulo de ingestión solo soportaba JSON y XML. En esta fase se ampliaron los formatos añadiendo soporte para CSV y GeoJSON, que son dos de los formatos mas habituales en APIs publicas.
+Hasta este momento el módulo de ingestión solo soportaba JSON y XML. Se ampliaron los formatos añadiendo soporte para CSV y GeoJSON, que son dos de los formatos mas habituales en APIs publicas.
 
 La detección del formato se añadió en el archivo existente \textbf{utils/ingest/parsers.py}. 
 
@@ -53,10 +53,23 @@ Hasta este momento, generar o editar una API existente en el historial, causaba 
     \label{tab:modelo-siteversion}
 \end{table}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/disenoimplementacion/historial-analisis.png}
+    \caption{Panel de Historial del sistema}
+    \label{fig:panel-historial}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/disenoimplementacion/historial-publicaciones.png}
+    \caption{Panel de Historial del sistema}
+    \label{fig:panel-historial}
+\end{figure}
+
 
 \subsection{Usuarios del proyecto}
 \label{subsec:usuarios-proyecto}
-
 
 Cada sitio Django generado incluía su propio sistema de autenticación, con paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creó el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteuser}. Cada usuario del sitio tenía su nombre, una contraseña y un rol. Este ultimo campo podria ser \texttt{super} para la creacion de un superusuario con acceso al panel de administracion Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinacion de proyecto y nombre de usuario era única, evitando asi duplicados dentro del mismo proyecto.
 
@@ -82,7 +95,7 @@ Cada sitio Django generado incluía su propio sistema de autenticación, con pag
 \subsection{LLM local y catálogo de modelos disponibles}
 \label{subsec:llm-local-catalogo-modelos}
 
-Hasta este momento el modelo de LLM utilizado para generar páginas era fijo, configurado en el fichero \textbf{.env} del servidor, sin que el usuario pudiera cambiarlo. En esta fase se implementaron dos cambios importantes respecto a esto.
+Hasta este momento el modelo de LLM utilizado para generar páginas era fijo, configurado en el fichero \textbf{.env} del servidor, sin que el usuario pudiera cambiarlo. En este sprint se implementaron dos cambios importantes respecto a esto.
 
 En primer lugar, se creó el fichero \texttt{utils/llm/llm\_catalog.py}, que definía un catálogo de modelos conocidos y recomendados. Cada entrada del catálogo incluía el identificador del modelo, su nombre legible, el proveedor, la URL base del API, una descripción y una lista de ventajas e inconvenientes. En este sprint el catálogo incluía tres modelos:
 
@@ -109,6 +122,14 @@ En segundo lugar, se implementó un selector de modelo completo, accesible desde
     usuario en su perfil. Si el usuario no tiene ninguno configurado, esta 
     opción aparece deshabilitada.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/webbuilder/disenoimplementacion/eleccion-llm.png}
+    \caption{Elecciones de LLM}
+    \label{fig:elecciones-llm}
+\end{figure}
+
 
 El catálogo cubría los casos más habituales, pero existía la necesidad de 
 permitir que cualquier usuario pudiera conectar su propio proveedor de LLM, 

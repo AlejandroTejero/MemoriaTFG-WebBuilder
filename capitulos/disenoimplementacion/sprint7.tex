@@ -1,7 +1,7 @@
-\section{Fase 7: Pulido y cierre}
+\section{Sprint 7: Pulido y cierre}
 \label{sec:pulido-cierre}
 
-Esta última fase se dedicó a pulir el sistema en todos sus puntos débiles, que eran: mejorar la calidad visual de los sitios generados, consolidar la infraestructura de producción y completar los workflows de n8n que quedaban pendientes. Por infraestructura de producción se entienden los cambios que hacen que el proyecto sea útil fuera del entorno de desarrollo, como por ejemplo la migración a una base de datos más robusta como PostgreSQL para soportar accesos concurrentes de múltiples usuarios, la gestión automática de contenedores Docker activos o la monitorización diaria del sistema. Es decir, no se añadieron funcionalidades realmente nuevas, sino que se llevaron las existentes a un nivel de madurez adecuado para la entrega.
+Esta último sprint se dedicó a pulir el sistema en todos sus puntos débiles, que eran: mejorar la calidad visual de los sitios generados, consolidar la infraestructura de producción y completar los workflows de n8n que quedaban pendientes. Por infraestructura de producción se entienden los cambios que hacen que el proyecto sea útil fuera del entorno de desarrollo, como por ejemplo la migración a una base de datos más robusta como PostgreSQL para soportar accesos concurrentes de múltiples usuarios, la gestión automática de contenedores Docker activos o la monitorización diaria del sistema. Es decir, no se añadieron funcionalidades realmente nuevas, sino que se llevaron las existentes a un nivel de madurez adecuado para la entrega.
 
 
 \subsection{Sistema de presets visuales}
@@ -9,7 +9,7 @@ Esta última fase se dedicó a pulir el sistema en todos sus puntos débiles, qu
 
 Uno de los principales problema durante todo el desarrollo fue que los proyectos tendían a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
 
-El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en esta fase se muestran en la Tabla~\ref{tab:presets-visuales}:
+El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en este sprint se muestran en la Tabla~\ref{tab:presets-visuales}:
 
 \begin{table}[H]
     \centering
@@ -51,11 +51,24 @@ La configuración en \texttt{settings.py} se actualizó para leer los parámetro
 Con la base de notificaciones ya preparada desde el fichero \\ \texttt{utils/generator/notifications.py}, se implementó el workflow de n8n \emph{generation-done}. Este workflow se activa mediante un webhook al que Django llama en cuanto termina la generación de un sitio, enviando un payload con los datos relevantes: email y nombre del usuario, título y tipo del sitio generado, URL de la API original, URL del preview si ya está desplegado, URL de descarga del ZIP, número de campos e items procesados, duración de la generación en segundos y modelo de LLM utilizado.
 n8n recibe este payload y envía automáticamente un correo de notificación al usuario informándole de que su sitio está listo. La llamada al webhook se realizó de forma completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente mediante un bloque \texttt{try/except} y la generación continuaba con normalidad.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/n8n/generation-done.png}
+    \caption{Workflow generation done}
+    \label{fig:Workflow generation done}
+\end{figure}
 
 \subsection{Workflow health-check}
 \label{subsec:workflow-health-check}
 
 El workflow de \emph{health-check} se configuró para ejecutarse automáticamente cada día mediante un nodo \emph{Schedule Trigger} de n8n. Su función es verificar que el sistema sigue operativo realizando una petición HTTP a la URL principal de WebBuilder y comprobando que la respuesta es correcta. Si la verificación falla, n8n envía una alerta por correo al administrador del sistema con información sobre el error detectado. Este workflow fue especialmente útil durante las últimas fases de desarrollo para detectar caídas del servidor sin necesidad de monitorización manual.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/n8n/health-check.png}
+    \caption{Workflow health check}
+    \label{fig:Workflow health check}
+\end{figure}
 
 
 \subsection{Workflow auto-shutdown}
@@ -63,14 +76,22 @@ El workflow de \emph{health-check} se configuró para ejecutarse automáticament
 
 El workflow de \emph{auto-shutdown} resolvió un problema operativo importante: los contenedores Docker de los sitios generados permanecían activos indefinidamente aunque nadie los estuviera usando, consumiendo recursos del servidor. Este workflow se ejecuta de forma programada cada hora, consulta la lista de contenedores activos con el prefijo \texttt{wb\_} y detiene aquellos que llevan inactivos más de un tiempo configurable. Esto permite mantener el servidor limpio y los recursos disponibles para nuevas generaciones sin intervención manual.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/n8n/shutdown.png}
+    \caption{Workflow auto shutdown}
+    \label{fig:Workflow auto shutdown}
+\end{figure}
+
 
 \subsection{Mejora del workflow de despliegue}
 \label{subsec:mejora-workflow-despliegue}
 
 El workflow de despliegue que se había construido en el Sprint 4 carecía de un mecanismo centralizado de gestión de errores. Si cualquiera de los nodos fallaba, la petición de Django quedaba sin respuesta. En este sprint se añadió el nodo \textbf{Responder Error}, que actúa como rama de error compartida para todos los nodos del workflow. Cuando cualquier paso falla, este nodo captura el error y devuelve a Django una respuesta JSON estructurada con el código HTTP 500, un mensaje descriptivo del error y el paso en el que ocurrió. Esto permite que Django actualice el estado del sitio a \texttt{error} y muestre un mensaje útil al usuario en lugar de dejar la operación colgada indefinidamente.
 
-
-% Fin diseño e implementacion
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/n8n/deploy.png}
+    \caption{Workflow deploy}
+    \label{fig:Workflow deploy}
+\end{figure}

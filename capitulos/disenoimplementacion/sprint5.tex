@@ -1,4 +1,4 @@
-\section{Fase 5: Refactor del proyecto y consolidación del generador}
+\section{Sprint 5: Refactor del proyecto y consolidación del generador}
 \label{sec:refactor-consolidacion-generador}
 
 Una vez realizadas las primeras pruebas del generador, el código del fichero 
@@ -8,7 +8,7 @@ profundo del proyecto, que no se limitó al generador sino que abarcó también
 los ficheros de presentación, el sistema de prompts y la trazabilidad de las 
 llamadas al LLM.
 
-Esta fase se dividió en dos bloques principales. En primer lugar, la 
+Este sprint se dividió en dos bloques principales. En primer lugar, la 
 refactorización del generador y de los ficheros de presentación, dividiendo 
 el código en módulos más pequeños y mantenibles. En segundo lugar, la 
 incorporación de nuevas funcionalidades de trazabilidad y análisis, como el 
@@ -64,7 +64,7 @@ en cuatro ficheros encargados cada uno de una labor especifica dentro de
 \label{subsec:refactor-templates-estilos}
 
 La misma causa que creó la decisión del refactor del generador ocurrió con los ficheros de presentación del proyecto (HTML, CSS y JavaScript).
-Hasta el momento los templates HTML eran ficheros que incluían todas las secciones en un único bloque, al igual que ocurría con los ficheros CSS y JavaScript. Como se mencionó anteriormente, esta fase introdujo una reorganización completa de la interfaz con la separación de responsabilidades.
+Hasta el momento los templates HTML eran ficheros que incluían todas las secciones en un único bloque, al igual que ocurría con los ficheros CSS y JavaScript. Como se mencionó anteriormente, este sprint introdujo una reorganización completa de la interfaz con la separación de responsabilidades.
 
 En cuanto a los templates se creó un nuevo módulo \textbf{partials}, encargado de contener los fragmentos que representan una sección concreta de cada página. Cada fichero principal pasó a contener sus partials, incluyendose mediante la etiqueta \textbf{include} de Django.
 
@@ -235,6 +235,5 @@ El panel mostraba las siguientes estadísticas agregadas:
     \item \textbf{Distribución por modelo}: agrupación de las llamadas por modelo de LLM utilizado, lo que facilitaba comparar el rendimiento de distintos proveedores cuando se probaban configuraciones diferentes.
 \end{itemize}
 
-Esta información resultó util para mejorar las siguientes fases donde cambios mínimos producirían grandes resultados.
-
+Esta información resultó útil para mejorar los siguientes sprints y realizar los cambios adecuados. Los datos reales recogidos por este panel se analizan en detalle en la Sección~\ref{sec:metricas-sistema}.
 

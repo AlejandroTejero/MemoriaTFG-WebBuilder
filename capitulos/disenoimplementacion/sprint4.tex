@@ -1,9 +1,9 @@
-\section{Fase 4: Generador de proyectos Django}
+\section{Sprint 4: Generador de proyectos Django}
 \label{sec:generador-proytectos}
 
 Tras la implementación del LLM y el sistema de schema funcionando correctamente, el siguiente paso era el más complejo del proyecto, ya que requería 
 coordinar múltiples llamadas al LLM de forma secuencial garantizando 
-que cada fichero generado fuese compatible con los anteriores. Dicho paso era convertir el schema aprobado por el usuario en un proyecto Django completo, funcional y desplegable. Durante esta fase del proyecto surgió el fichero más importante hasta la fecha: \textbf{utils/generator/project\_generator}, el núcleo de WebBuilder.
+que cada fichero generado fuese compatible con los anteriores. Dicho paso era convertir el schema aprobado por el usuario en un proyecto Django completo, funcional y desplegable. Durante este sprint del proyecto surgió el fichero más importante hasta la fecha: \textbf{utils/generator/project\_generator}, el núcleo de WebBuilder.
 
 
 \subsection{Arquitectura del generador}
@@ -61,7 +61,7 @@ una interfaz más genérica.
 \subsection{Evolución del modelo de datos}
 \label{subsec:modelo-generatedsite}
 
-El modelo \texttt{GeneratedSite} fue variando durante esta fase para reflejar 
+El modelo \texttt{GeneratedSite} fue variando durante este sprint para reflejar 
 los nuevos estados del sistema. Se añadieron los campos \texttt{project\_files} 
 para almacenar todos los ficheros generados, \texttt{project\_name} con el nombre 
 del proyecto y \texttt{preview\_url} para guardar la URL del sitio desplegado 
@@ -92,7 +92,7 @@ Tabla~\ref{tab:estados-generatedsite}.
         & error & El despliegue ha fallado en algún paso \\
         \hline
     \end{tabular}
-    \caption{Estados del modelo GeneratedSite en la Fase 4}
+    \caption{Estados del modelo GeneratedSite en el sprint 4}
     \label{tab:estados-generatedsite}
 \end{table}
 
@@ -154,7 +154,7 @@ En la Figura~\ref{fig:workflow-despliegue} se muestra el flujo completo del work
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{img/disenoimplementacion/workflowdespliegue}
+    \includegraphics[width=0.5\textwidth]{img/disenoimplementacion/workflowdespliegue.png}
     \caption{Workflow de despliegue n8n}
     \label{fig:workflow-despliegue}
 \end{figure}
