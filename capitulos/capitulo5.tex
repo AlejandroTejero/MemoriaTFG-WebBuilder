@@ -35,6 +35,141 @@ Además de los casos de uso, se ha realizado un análisis de los errores ocurrid
 \subsection{Casos de uso}
 \label{subsec:casos-uso}
 
+
+
+\subsection{Caso de uso 1: Web de cócteles}
+\label{subsec:caso-cocktails}
+
+El primer caso de uso utiliza la API pública de TheCocktailDB, que devuelve un catálogo de cócteles con imagen 
+y nombre de cada uno. El endpoint utilizado fue:
+
+\begin{center}
+\texttt{https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=Cocktail}
+\end{center}
+
+El prompt introducido por el usuario fue el siguiente:
+
+\begin{quote}
+	\textit{Genera una web de recetas de cócteles con una estética elegante y clara. Muestra todos los cócteles 
+	en una cuadrícula visual con su imagen y nombre. Cada cóctel debe tener su propia página de detalle. La página principal debe tener una sección hero atmosférica que dé la bienvenida al usuario a la experiencia del bar.}
+\end{quote}
+
+El sistema analizó la API, detectó automáticamente dos campos: el nombre del cóctel y la URL de su imagen. 
+El LLM propuso un schema de tipo \texttt{catalog} con el título \textit{Cocktails Bar}, que fue aceptado sin modificaciones. La generación completó los siete pasos sin errores ni reintentos, produciendo un proyecto con 27 archivos, 3 páginas y 8 llamadas al LLM.
+
+El sitio resultante incluye una página principal con una sección de bienvenida y una cuadrícula de cócteles 
+destacados con imagen y nombre, un catálogo completo paginado con todos los cócteles disponibles y páginas de detalle individuales para cada uno. El sistema generó además páginas de registro e inicio de sesión con estilos coherentes con el resto del sitio.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/cocktail/cocktailshome.png}
+    \caption{Página principal del sitio de cócteles generado por WebBuilder}
+    \label{fig:cocktails-home}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/cocktail/cocktailscatalogo1.png}
+    \caption{Parte superior del catálogo de cócteles}
+    \label{fig:cocktails-catalogo1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/cocktail/cocktailscatalogo2.png}
+    \caption{Parte inferior del catálogo de cócteles}
+    \label{fig:cocktails-catalogo2}
+\end{figure}
+
+En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante l…En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación ni reintentos. El modelo de datos generado es coherente con la API, los dos campos detectados (nombre e imagen) corresponden exactamente a lo que devuelve el endpoint. Visualmente el resultado es limpio y funcional, aunque el hero section quedó más básico de lo esperado, sin llegar a la estética de bar atmosférica que se pedía en el prompt. El despliegue automático funcionó sin problemas, el contenedor Docker arrancó correctamente y el sitio quedó accesible mediante su URL de previsualización.
+
+9
+\subsection{Caso de uso 2: Catálogo de películas de animación}
+\label{subsec:caso-peliculas}
+
+El segundo caso de uso utiliza la API pública de SampleAPIs, que devuelve un catálogo de películas de animación con imagen, título, año e identificador de IMDB. El endpoint utilizado fue:
+
+\begin{center}
+\texttt{https://api.sampleapis.com/movies/animation}
+\end{center}
+
+El prompt introducido por el usuario fue el siguiente:
+
+\begin{quote}
+\textit{Genera una web de catálogo de películas de animación. Muestra todas las películas en una cuadrícula con su título, año de lanzamiento y puntuación. Cada película debe tener su propia página de detalle. La página principal debe tener una sección hero de bienvenida y una sección con las películas mejor valoradas. Usa un estilo moderno y colorido.}
+\end{quote}
+
+El sistema detectó automáticamente los campos disponibles en la API y el LLM propuso un schema de tipo \texttt{catalog} con el título \textit{Catálogo de Películas de Animación}. La generación completó los siete pasos sin errores ni reintentos.
+
+El sitio resultante incluye una página principal con una sección de bienvenida y una cuadrícula de películas mejor valoradas con sus pósters, un catálogo completo con todas las películas disponibles organizado en cuadrícula de cuatro columnas y páginas de detalle individuales para cada película.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/peliculas/peliculashome.png}
+    \caption{Página principal del catálogo de películas de animación generado por WebBuilder}
+    \label{fig:peliculas-home}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/peliculas/peliculascatalogo.png}
+    \caption{Catálogo completo de películas de animación con pósters e información}
+    \label{fig:peliculas-catalogo}
+\end{figure}
+
+En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación. El catálogo visual con pósters queda especialmente bien dado que la API devuelve URLs de imagen directas. Como limitación destacable, el campo de puntuación no contiene una valoración numérica real sino el identificador de IMDB de cada película, lo que hace que aparezca como \textit{Puntuación IMDB: tt7424200} en lugar de una nota. Esto es una limitación de los datos de la propia API y no del sistema de generación. El despliegue automático funcionó correctamente y el contenedor quedó accesible mediante su URL de previsualización.
+
+
+\subsection{Caso de uso 3: Catálogo de personajes de Rick y Morty}
+\label{subsec:caso-rickmorty}
+
+El tercer caso de uso utiliza la API pública de Rick and Morty, que devuelve un catálogo completo de personajes de la serie con imagen, nombre, especie, estado, origen y localización. El endpoint utilizado fue:
+
+\begin{center}
+\texttt{https://rickandmortyapi.com/api/character}
+\end{center}
+
+El prompt introducido por el usuario fue el siguiente:
+
+\begin{quote}
+\textit{Genera una web de catálogo de personajes de la serie Rick y Morty. Muestra todos los personajes en una cuadrícula con su foto, nombre, especie y estado. Cada personaje debe tener su propia página de detalle con toda la información disponible: origen, localización y número de episodios en los que aparece. La página principal debe tener una sección hero de bienvenida y una sección con personajes destacados. Usa un estilo moderno inspirado en la estética de ciencia ficción de la serie.}
+\end{quote}
+
+El sistema detectó automáticamente los campos disponibles y el LLM propuso un schema de tipo \texttt{catalog} con el título \textit{Rick y Morty Catalog}. La generación completó los siete pasos sin errores ni reintentos.
+
+El sitio resultante incluye una página principal con hero section con imagen del personaje principal y sección de personajes destacados, un catálogo completo con todos los personajes organizados en cuadrícula de cuatro columnas mostrando imagen, nombre, especie y badge de estado con código de color (verde para vivo, rojo para muerto, gris para desconocido), y páginas de detalle individuales con toda la información del personaje estructurada en campos con etiquetas.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/rickmorty/home1.png}
+    \caption{Parte superior de la pagina principal de Rick y Morty}
+    \label{fig:rickmorty-home}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/rickmorty/home2.png}
+    \caption{Parte inferior de la pagina principal de Rick y Morty}
+    \label{fig:rickmorty-home}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/rickmorty/catalogo.png}
+    \caption{Catálogo de personajes con imágenes y badges de estado}
+    \label{fig:rickmorty-catalogo}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/rickmorty/detalle.png}
+    \caption{Página de detalle de un personaje con toda su información}
+    \label{fig:rickmorty-detalle}
+\end{figure}
+
+En cuanto a la evaluación del caso, el sitio funciona correctamente en todas sus páginas. El modelo de datos generado es coherente con la API y todos los campos se muestran correctamente. El resultado visual es el más completo de los tres casos: el catálogo con badges de estado coloreados y las páginas de detalle bien estructuradas demuestran la capacidad del sistema para generar interfaces funcionales y visualmente cuidadas a partir de datos con cierta complejidad. El despliegue automático funcionó correctamente y el contenedor quedó accesible mediante su URL de previsualización.
+
+
 \subsection{Análisis de errores}
 \label{subsec:analisis-errores}
 
