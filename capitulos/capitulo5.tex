@@ -35,6 +35,8 @@ Además de los casos de uso, se ha realizado un análisis de los errores ocurrid
 \subsection{Casos de uso}
 \label{subsec:casos-uso}
 
+A continuación se muestran algunos ejemplos de generación creados por WebBuilder, detallando de donde se recogen los datos,
+el prompt que se utilizo, el resultado tras el proceso y una evaluación de cada generación.
 
 
 \subsection{Caso de uso 1: Web de cócteles}
@@ -83,7 +85,7 @@ destacados con imagen y nombre, un catálogo completo paginado con todos los có
 
 En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante l…En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación ni reintentos. El modelo de datos generado es coherente con la API, los dos campos detectados (nombre e imagen) corresponden exactamente a lo que devuelve el endpoint. Visualmente el resultado es limpio y funcional, aunque el hero section quedó más básico de lo esperado, sin llegar a la estética de bar atmosférica que se pedía en el prompt. El despliegue automático funcionó sin problemas, el contenedor Docker arrancó correctamente y el sitio quedó accesible mediante su URL de previsualización.
 
-9
+
 \subsection{Caso de uso 2: Catálogo de películas de animación}
 \label{subsec:caso-peliculas}
 
