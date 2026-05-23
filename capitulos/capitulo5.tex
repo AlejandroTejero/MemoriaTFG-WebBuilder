@@ -86,40 +86,48 @@ destacados con imagen y nombre, un catálogo completo paginado con todos los có
 En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante l…En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación ni reintentos. El modelo de datos generado es coherente con la API, los dos campos detectados (nombre e imagen) corresponden exactamente a lo que devuelve el endpoint. Visualmente el resultado es limpio y funcional, aunque el hero section quedó más básico de lo esperado, sin llegar a la estética de bar atmosférica que se pedía en el prompt. El despliegue automático funcionó sin problemas, el contenedor Docker arrancó correctamente y el sitio quedó accesible mediante su URL de previsualización.
 
 
-\subsection{Caso de uso 2: Catálogo de películas de animación}
-\label{subsec:caso-peliculas}
+\subsection{Caso de uso 2: Dashboard de criptomonedas}
+\label{subsec:caso-criptomonedas}
 
-El segundo caso de uso utiliza la API pública de SampleAPIs, que devuelve un catálogo de películas de animación con imagen, título, año e identificador de IMDB. El endpoint utilizado fue:
+El segundo caso de uso utiliza la API pública de CoinLore, que devuelve datos de mercado en tiempo real de las 100 principales criptomonedas por capitalización, incluyendo nombre, símbolo, precio en USD, variación en las últimas 24 horas, capitalización de mercado, volumen y oferta circulante. El endpoint utilizado fue:
 
 \begin{center}
-\texttt{https://api.sampleapis.com/movies/animation}
+    \texttt{https://api.coinlore.net/api/tickers/}
 \end{center}
 
 El prompt introducido por el usuario fue el siguiente:
 
 \begin{quote}
-\textit{Genera una web de catálogo de películas de animación. Muestra todas las películas en una cuadrícula con su título, año de lanzamiento y puntuación. Cada película debe tener su propia página de detalle. La página principal debe tener una sección hero de bienvenida y una sección con las películas mejor valoradas. Usa un estilo moderno y colorido.}
+\textit{Estética profesional. Color de fondo: \#0f0f0f, color de superficie: \#161616, color de borde: \#333333, color de acento: \#7c3aed. Números de métricas grandes en blanco, labels en gris. Tablas con filas alternadas en \#1a1a1a. Tipografía monoespaciada para números y datos. Botones primarios y elementos activos en violeta. Sin imágenes decorativas, todo datos y estructura con padding generoso entre secciones.}
 \end{quote}
 
-El sistema detectó automáticamente los campos disponibles en la API y el LLM propuso un schema de tipo \texttt{catalog} con el título \textit{Catálogo de Películas de Animación}. La generación completó los siete pasos sin errores ni reintentos.
+El sistema detectó automáticamente los campos disponibles en la API y el LLM propuso un schema de tipo \texttt{dashboard} con el título \textit{Criptomonedas}. La generación completó los siete pasos sin errores ni reintentos.
 
-El sitio resultante incluye una página principal con una sección de bienvenida y una cuadrícula de películas mejor valoradas con sus pósters, un catálogo completo con todas las películas disponibles organizado en cuadrícula de cuatro columnas y páginas de detalle individuales para cada película.
+El sitio resultante es un panel de control con estética oscura y acento violeta. La página principal incluye cuatro tarjetas de métricas resumen en la parte superior con el total de monedas analizadas, el precio medio, el precio máximo y el precio mínimo del conjunto. Bajo las tarjetas aparece una barra de progreso de variación 24h que indica visualmente la proporción de monedas al alza frente a las bajistas, seguida de una tabla con el top 5 de criptomonedas por precio, mostrando rango, símbolo, nombre, precio en USD y cambio porcentual en 24 horas con badges coloreados. La segunda página muestra el listado completo de las 100 criptomonedas en tarjetas individuales con su rango, símbolo, nombre, precio, variación 24h, capitalización de mercado, volumen y oferta circulante, junto con un botón de detalle en violeta para cada entrada.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{img/casosdeuso/peliculas/peliculashome.png}
-    \caption{Página principal del catálogo de películas de animación generado por WebBuilder}
-    \label{fig:peliculas-home}
+    \includegraphics[width=\textwidth]{img/casosdeuso/criptomonedas/home.png}
+    \caption{Panel principal del dashboard de criptomonedas}
+    \label{fig:criptomonedas-home}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{img/casosdeuso/peliculas/peliculascatalogo.png}
-    \caption{Catálogo completo de películas de animación con pósters e información}
-    \label{fig:peliculas-catalogo}
+    \includegraphics[width=\textwidth]{img/casosdeuso/criptomonedas/criptos.png}
+    \caption{Listado completo de criptomonedas}
+    \label{fig:criptomonedas-listado}
 \end{figure}
 
-En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación. El catálogo visual con pósters queda especialmente bien dado que la API devuelve URLs de imagen directas. Como limitación destacable, el campo de puntuación no contiene una valoración numérica real sino el identificador de IMDB de cada película, lo que hace que aparezca como \textit{Puntuación IMDB: tt7424200} en lugar de una nota. Esto es una limitación de los datos de la propia API y no del sistema de generación. El despliegue automático funcionó correctamente y el contenedor quedó accesible mediante su URL de previsualización.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/casosdeuso/criptomonedas/detalle1.png}
+    \caption{Detalle de cada criptomoneda}
+    \label{fig:criptomonedas-detalle}
+\end{figure}
+
+En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación. Es el caso de uso que mejor refleja las capacidades del tipo \texttt{dashboard}, ya que la API devuelve datos numéricos ricos que el sistema aprovecha para construir métricas agregadas, rankings y visualizaciones comparativas. El prompt orientado a estética consiguió un resultado visualmente coherente y profesional, con la paleta oscura y el acento violeta aplicados de forma consistente en todos los elementos de la interfaz. El despliegue automático funcionó correctamente y el contenedor quedó accesible mediante su URL de previsualización.
 
 
 \subsection{Caso de uso 3: Catálogo de personajes de Rick y Morty}
