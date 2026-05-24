@@ -30,7 +30,7 @@ Otro problema detectado en las generaciones era que los templates HTML producido
 \subsection{Versionado de proyectos generados}
 \label{subsec:versionado-paginas}
 
-Hasta este momento, generar o editar una API existente en el historial, causaba que los ficheros existentes se sobreescribieran, de esta forma era imposible tener un control de versiones o recurrir a una prueba anterior que fuese mejor. Para solucionar esto se creo el modelo \textbf{SiteVersion}, enlazado mediante una clave foránea a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteversion}. Cada version estaba nombrada con un numero incremental, y almacenaba una copia completa de los ficheros, una etiqueta descriptiva opcional y la fecha de creación del proyecto. Las versiones estaban ordenadas de forma más reciente a mas antigua, permitiendo asi al usuario consultar un historial funcional y la posibilidad de recuperar cualquier version anterior.
+Hasta este momento, generar o editar una API existente en el historial, causaba que los ficheros existentes se sobrescribieran, de esta forma era imposible tener un control de versiones o recurrir a una prueba anterior que fuese mejor. Para solucionar esto se creo el modelo \textbf{SiteVersion}, enlazado mediante una clave foránea a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteversion}. Cada version estaba nombrada con un numero incremental, y almacenaba una copia completa de los ficheros, una etiqueta descriptiva opcional y la fecha de creación del proyecto. Las versiones estaban ordenadas de forma más reciente a mas antigua, permitiendo así al usuario consultar un historial funcional y la posibilidad de recuperar cualquier version anterior.
 
 \begin{table}[H]
     \centering
@@ -71,7 +71,7 @@ Hasta este momento, generar o editar una API existente en el historial, causaba 
 \subsection{Usuarios del proyecto}
 \label{subsec:usuarios-proyecto}
 
-Cada sitio Django generado incluía su propio sistema de autenticación, con paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creó el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteuser}. Cada usuario del sitio tenía su nombre, una contraseña y un rol. Este ultimo campo podria ser \texttt{super} para la creacion de un superusuario con acceso al panel de administracion Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinacion de proyecto y nombre de usuario era única, evitando asi duplicados dentro del mismo proyecto.
+Cada sitio Django generado incluía su propio sistema de autenticación, con paginas de login y register. Para gestionar los usuarios de esos sitios desde la propia plataforma se creó el modelo \textbf{SiteUser}, vinculado a \textbf{GeneratedSite}, como se muestra en la Tabla~\ref{tab:modelo-siteuser}. Cada usuario del sitio tenía su nombre, una contraseña y un rol. Este último campo podria ser \texttt{super} para la creación de un superusuario con acceso al panel de administración Django del proyecto creado, o \texttt{normal} para un usuario con acceso solo al frontend. La combinación de proyecto y nombre de usuario era única, evitando así duplicados dentro del mismo proyecto.
 
 \begin{table}[H]
     \centering

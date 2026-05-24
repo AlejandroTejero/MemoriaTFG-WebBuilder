@@ -204,7 +204,7 @@ el selector de modelo LLM y los nuevos controles de idioma y tema.
 
 Tras unas cuantas pruebas, se llegó a la conclusión de un problema importante, podría ocurrir que un usuario no familiarizado con los prompts de IA no supiese cómo hacerlo adecuadamente, o que incluso lo dejase vació. Para resolver este problema se creó el fichero \texttt{utils/llm/enrich\_prompts.py}, 
 encargado de analizar automáticamente los campos del dataset antes de construir el prompt y añadir contenido personalizado.
-Si el dataset tenía campos con imagenes se le indica al modelo que las usara de forma destacada. Si tenía precios, que los resalte visualmente. Si tenía
+Si el dataset tenía campos con imágenes se le indica al modelo que las usara de forma destacada. Si tenía precios, que los resalte visualmente. Si tenía
 fechas que las mostrara de forma clara. De esta forma se garantiza que el LLM siempre recibiera suficiente contexto para tomar decisiones razonadas.
 De todos modos si algo no estuviese en la mente del usuario, en el siguiente paso de editar el schema podría modificarlo añadiendo los campos necesarios o modificando los existentes.
 
@@ -220,7 +220,7 @@ Cada llamada al LLM durante la generación de un proyecto producía un registro 
 \subsection{Verificación de consistencia}
 \label{subsec:verificacion-consistencia}
 
-Otro problema frecuente era que el LLM no tenía suficiente contexto entre ficheros, principal causa de las alucinaciones del LLM. Ocurria lo siguiente:
+Otro problema frecuente era que el LLM no tenía suficiente contexto entre ficheros, principal causa de las alucinaciones del LLM. Ocurría lo siguiente:
 se definía un campo con un nombre en \textbf{models.py} y luego en los demás ficheros se referenciaba con ligeros cambios, provocando errores de ejecución.
 Para detectar estos casos antes de que el usuario desplegase el proyecto, se implementó el fichero \texttt{utils/llm/consistency\_checker.py}.
 

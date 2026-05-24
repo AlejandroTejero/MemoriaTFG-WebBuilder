@@ -79,7 +79,7 @@ original.
 \label{subsection:deteccion-coleccion-principal}
 
 La parte mas compleja de este sprint fue entender la estructura interna de los campos de las distintas APIs. Los campos de las APIs no suelen ser una lista plana de items
-en la raiz, es decir, la colección principal no esta expuesta, sino que esta envuelta bajo claves de metadatos como \texttt{results}, \texttt{data} o \texttt{items},
+en la raíz, es decir, la colección principal no esta expuesta, sino que esta envuelta bajo claves de metadatos como \texttt{results}, \texttt{data} o \texttt{items},
 o incluso con varios niveles de profundidad. 
 
 Para resolver esto se implementó un nuevo modulo: \texttt{utils/analysis}, donde se crearon ficheros con funciones importantes como \texttt{find\_main\_items}, la cual recorría recursivamente la estructura de la API, y se evaluaba con un sistema de puntuación propio para sacar la estructura principal.
@@ -94,7 +94,7 @@ Cada lista candidata se puntuaba según cinco factores:
     \item \textbf{Penalización por profundidad}: los paths muy anidados o que pasaban por índices numéricos se penalizaban para favorecer colecciones cercanas a la raíz, que solían ser las más relevantes.
 \end{itemize}
 
-Al finalizar este scoring, se seleccionaba la lista con mayor puntuacion como 
+Al finalizar este scoring, se seleccionaba la lista con mayor puntuación como 
 colección principal, junto con la ruta dentro de la estructura original. En la 
 Figura~\ref{fig:sistema-scoring} se muestra cómo los cinco factores se combinan 
 en la función de scoring para obtener la colección principal.
@@ -110,13 +110,13 @@ en la función de scoring para obtener la colección principal.
 \subsection{Sugerencia automática}
 \label{subsec:sugerencia-automatica}
 
-Una vez localizada la colección principal, se realizo la implementacion del nuevo fichero \textbf{utils/mapping.py}, encargado de sugerir automaticamente que campos
+Una vez localizada la colección principal, se realizo la implementación del nuevo fichero \textbf{utils/mapping.py}, encargado de sugerir automáticamente que campos
 del dataset debían ocupar cada rol: fecha, id, descripción, etc. Para ello se utilizaba un catalogo predefinido que asociaba cada rol con sus nombres más habituales.
-Por ejemplo un campo llamado \texttt{published\_at}, obtenía un alto score para el rol fecha ya que contenia la subcadena \texttt{published}.
+Por ejemplo un campo llamado \texttt{published\_at}, obtenía un alto score para el rol fecha ya que contenía la subcadena \texttt{published}.
 Además de la comparación por nombre, el sistema añadía score extra si el tipo del campo observado coincidía con el tipo esperado en el rol.
 
 Para evitar que la misma clave del dataset se asignara como primera sugerencia de varios roles a la vez, se implementó una función llamada \texttt{suggest\_mapping}, que aplicaba una asignación por orden de prioridad: primero se reservaba la mejor clave para el rol \texttt{id}, luego para \texttt{title}, luego para \texttt{description}, y así sucesivamente. Esto reducía la repetición de sugerencias y hacía el mapping resultante más útil para el usuario, sin embargo, ocurrían errores como que algunos campos se quedasen vacíos o que al asignarse por orden de prioridad, algunos campos sueltos se asignasen a roles
-que no tenían relacion.
+que no tenían relación.
 
 
 
