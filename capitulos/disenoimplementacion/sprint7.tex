@@ -43,7 +43,15 @@ El fichero \texttt{theme\_rules.py} centraliza tokens visuales reutilizables com
 
 Durante todo el desarrollo, WebBuilder había utilizado SQLite como base de datos, lo cual era suficiente para el entorno de desarrollo pero inadecuado para producción. En este sprint se realizó la migración a PostgreSQL, que ofrece mayor robustez, soporte para accesos concurrentes y mejor rendimiento con volúmenes de datos crecientes.
 
-La configuración en \texttt{settings.py} se actualizó para leer los parámetros de conexión desde variables de entorno: nombre de la base de datos (\texttt{DB\_NAME}), usuario (\texttt{DB\_USER}), contraseña (\texttt{DB\_PASSWORD}), host (\texttt{DB\_HOST}) y puerto (\texttt{DB\_PORT}, por defecto \texttt{5432}). La configuración anterior de SQLite se migró a la nueva base de datos. Las migraciones existentes se aplicaron sobre la nueva base de datos, conservando los logs y métricas generados durante el desarrollo.
+La configuración en \texttt{settings.py} se actualizó para leer los parámetros de conexión desde variables de entorno: nombre de la base de datos (\texttt{DB\_NAME}), usuario (\texttt{DB\_USER}), contraseña (\texttt{DB\_PASSWORD}), host (\texttt{DB\_HOST}) y puerto (\texttt{DB\_PORT}, por defecto \texttt{5432}). La configuración anterior de SQLite se migró a la nueva base de datos. Las migraciones existentes se aplicaron sobre la nueva base de datos, conservando los logs y métricas generados durante el desarrollo. Tras la migración, el esquema completo de la base de datos quedó de la siguiente manera:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/diagramaER.png}
+    \caption{Esquema final de la base de datos}
+    \label{fig:Esquema final de la base de datos}
+\end{figure}
+
 
 \subsection{Workflow generation-done}
 \label{subsec:workflow-generation-done}

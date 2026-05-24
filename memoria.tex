@@ -20,8 +20,28 @@
 \usepackage[nottoc, notlot, notlof, notindex]{tocbibind}
 % Logo LaTeX
 \usepackage{latexsym}
-% Diagrama gantt
-\usepackage{pgfgantt}
+
+% Necesario para el prompt de ejemplo del planner schema
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    rulecolor=\color{gray!40},
+    backgroundcolor=\color{gray!5},
+    columns=flexible,
+    keepspaces=true,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate=
+        {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+        {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+        {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {¿}{{?`}}1 {¡}{{!`}}1,
+}
+
 
 % Escribe el título y el nombre del autor / autora para usarse en otras partes
 \title{Título del Trabajo con Letras Mayúsculas para Sustantivos y Adjetivos}

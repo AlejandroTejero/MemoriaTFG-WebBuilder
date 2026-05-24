@@ -22,7 +22,67 @@ El LLM interviene en los primeros seis pasos, que se encargan de la creación de
     \item \textbf{Paso 7 — Archivos fijos}: se ensamblan todos los ficheros de infraestructura que no dependen del dataset ni del LLM: \texttt{settings.py}, \texttt{manage.py}, \texttt{wsgi.py}, \texttt{requirements.txt}, \texttt{Dockerfile} y \texttt{entrypoint.sh}.
 \end{itemize}
 
+
+Como ejemplo representativo, se muestra el prompt que se envía 
+al LLM en el Paso 2 para la generación del fichero \texttt{models.py}. 
+A diferencia de prompts más abiertos, este es restrictivo, la causa es que el código generado debe ser sintácticamente correcto sin ninguna intervención humana, por lo que cada regla busca eliminar un tipo 
+de error concreto observado durante las pruebas.
+
+\begin{lstlisting}[caption={Prompt de sistema para la generación de models.py}, 
+label={lst:models-system}]
+Eres un desarrollador Django experto en Python y Tailwind CSS.
+REGLA ABSOLUTA: devuelves ÚNICAMENTE código puro, sin ningún tipo de 
+Markdown. Sin ```, sin ```python, sin explicaciones. Solo el código.
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Prompt de usuario para la generación de models.py}, 
+label={lst:models-user}]
+SITIO: <nombre del sitio>
+
+CAMPOS:
+[{"key": "campo1", "label": "Etiqueta 1"}, ...]
+
+ROLES SEMÁNTICOS INFERIDOS (clave: rol):
+  - campo1: title
+  - campo2: numeric
+  - campo3: image
+
+DATOS DE EJEMPLO:
+[{"campo1": "valor1", "campo2": 42, ...}, ...]
+
+REGLAS:
+- CRÍTICO: tu respuesta debe empezar EXACTAMENTE con
+  'from django.db import models'. Sin nada antes.
+- Un modelo llamado 'Item' con los campos del schema.
+- rol 'numeric'   -> FloatField(null=True, blank=True)
+- rol 'image'     -> URLField(max_length=500, blank=True)
+- rol 'date'      -> DateField(null=True, blank=True)
+- rol 'boolean'   -> BooleanField(null=True, blank=True)
+- rol 'long_text' -> TextField(blank=True)
+- rol 'title'     -> CharField(max_length=300, blank=True)
+- rol 'text'      -> CharField(max_length=500, blank=True)
+- Todos los campos opcionales (blank=True / null=True).
+- Añade created_at = models.DateTimeField(auto_now_add=True).
+- __str__ devuelve el campo más representativo.
+- NUNCA uses JSONField ni CharField para listas.
+
+\end{lstlisting}
+
 El resultado final es un diccionario Python donde cada clave es una ruta relativa de fichero y cada valor es su contenido. Este diccionario se guarda en el campo \texttt{project\_files} del modelo \texttt{GeneratedSite}, comentado más adelante en la subsección~\ref{subsec:modelo-generatedsite}
+
+A modo de ejemplo, la Figura~\ref{fig:Primera-generación} muestra el resultado de una 
+de las primeras generaciones reales del sistema, utilizando la API pública 
+\texttt{fakestoreapi.com/products}, que devuelve un catálogo de productos 
+con campos como título, precio, categoría e imagen. El sitio generado, aunque 
+funcional, refleja las limitaciones del generador: 
+diseño genérico, campos mostrados en crudo, sin estilos visuales y sin las imagenes de la base de datos.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/oldversions/firstgenPRODUCTS}
+    \caption{Primera web generada por WebBuilder a partir de la API FakeStore}
+    \label{fig:Primera-generación}
+\end{figure}
 
 En la Figura~\ref{fig:generador-7-pasos} se muestra la secuencia completa de los siete pasos del generador.
 

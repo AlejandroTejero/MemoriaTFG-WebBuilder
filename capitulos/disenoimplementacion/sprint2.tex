@@ -6,6 +6,27 @@ la aplicación: modelos, sistema de ingestión de datos, lógica de análisis, y
 pruebas del flujo completo. La arquitectura hasta este punto era bastante sencilla: una aplicación Django que recibía una URL, descargaba los 
 datos de la API, los analizaba y devolvía una propuesta de estructura para el futuro sitio web.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/oldversions/urlantigua}
+    \caption{Paso 1 del asistente: introducción de la URL de la API}
+    \label{fig:urlantigua}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/oldversions/heuristicas1}
+    \caption{Paso 2 del asistente: configuración del mapping mediante heurísticas}
+    \label{fig:heuristicas1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/oldversions/heuristicas2}
+    \caption{Paso 2 del asistente: asignación manual de campos por roles}
+    \label{fig:heuristicas2}
+\end{figure}
+
 \subsection{Modelo de datos}
 \label{subsec:modelo-datos}
 
@@ -97,11 +118,14 @@ Además de la comparación por nombre, el sistema añadía score extra si el tip
 Para evitar que la misma clave del dataset se asignara como primera sugerencia de varios roles a la vez, se implementó una función llamada \texttt{suggest\_mapping}, que aplicaba una asignación por orden de prioridad: primero se reservaba la mejor clave para el rol \texttt{id}, luego para \texttt{title}, luego para \texttt{description}, y así sucesivamente. Esto reducía la repetición de sugerencias y hacía el mapping resultante más útil para el usuario, sin embargo, ocurrían errores como que algunos campos se quedasen vacíos o que al asignarse por orden de prioridad, algunos campos sueltos se asignasen a roles
 que no tenían relacion.
 
+
+
 \subsection{Elección pagina}
 \label{subsec:eleccion-pagina}
 
 Para guiar mejor al usuario durante el proceso de mapping, se añadió un sistema de perfiles de intención en \texttt{intents.py}. El usuario podía indicar si quería construir un blog, un portfolio, un catálogo o un directorio, y el sistema reordenaba los roles y ajustaba cuáles eran obligatorios, recomendados u opcionales según ese tipo de sitio.
-
+Se puede observar en las Figuras~\ref{fig:heuristicas1} y~\ref{fig:heuristicas2} 
+cómo el sistema solicitaba al usuario configurar el tipo de pagina y los campos.
 
 \subsection{Calidad del mapping}
 \label{subsec:calidad-mapping}

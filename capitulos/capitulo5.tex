@@ -29,7 +29,8 @@ Para cada caso de uso se han evaluado los siguientes criterios:
 	\item \textbf{Despliegue automático:} el workflow de n8n completa el proceso de build y arranque del contenedor Docker sin intervención manual, devolviendo una URL de previsualización accesible.
 \end{itemize}
 
-Además de los casos de uso, se ha realizado un análisis de los errores ocurridos en el proceso de desarrollo, categorizados por tipo y documentados con su causa, consecuencia y solución aplicada, que se recoge en la Sección~\ref{sec:analisis-errores}.
+Además de los casos de uso, se ha realizado un análisis de los errores ocurridos en el proceso de desarrollo, categorizados por tipo y documentados con su causa, consecuencia y solución aplicada, que se recoge en la Sección~\ref{subsec:analisis-errores}.
+
 
 
 \subsection{Casos de uso}
@@ -53,14 +54,14 @@ El prompt introducido por el usuario fue el siguiente:
 
 \begin{quote}
 	\textit{Genera una web de recetas de cócteles con una estética elegante y clara. Muestra todos los cócteles 
-	en una cuadrícula visual con su imagen y nombre. Cada cóctel debe tener su propia página de detalle. La página principal debe tener una sección hero atmosférica que dé la bienvenida al usuario a la experiencia del bar.}
+	en una cuadrícula visual con su imagen y nombre. La página principal debe tener una sección hero que dé la bienvenida al usuario a la experiencia del bar.}
 \end{quote}
 
 El sistema analizó la API, detectó automáticamente dos campos: el nombre del cóctel y la URL de su imagen. 
 El LLM propuso un schema de tipo \texttt{catalog} con el título \textit{Cocktails Bar}, que fue aceptado sin modificaciones. La generación completó los siete pasos sin errores ni reintentos, produciendo un proyecto con 27 archivos, 3 páginas y 8 llamadas al LLM.
 
 El sitio resultante incluye una página principal con una sección de bienvenida y una cuadrícula de cócteles 
-destacados con imagen y nombre, un catálogo completo paginado con todos los cócteles disponibles y páginas de detalle individuales para cada uno. El sistema generó además páginas de registro e inicio de sesión con estilos coherentes con el resto del sitio.
+destacados con imagen y nombre, con un catálogo completo paginado con todos los cócteles disponibles. El sistema generó además páginas de registro e inicio de sesión con estilos coherentes con el resto del sitio.
 
 \begin{figure}[H]
     \centering
@@ -83,7 +84,7 @@ destacados con imagen y nombre, un catálogo completo paginado con todos los có
     \label{fig:cocktails-catalogo2}
 \end{figure}
 
-En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante l…En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación ni reintentos. El modelo de datos generado es coherente con la API, los dos campos detectados (nombre e imagen) corresponden exactamente a lo que devuelve el endpoint. Visualmente el resultado es limpio y funcional, aunque el hero section quedó más básico de lo esperado, sin llegar a la estética de bar atmosférica que se pedía en el prompt. El despliegue automático funcionó sin problemas, el contenedor Docker arrancó correctamente y el sitio quedó accesible mediante su URL de previsualización.
+En cuanto a la evaluación del caso, el sitio funciona correctamente: todas las páginas cargan, los datos de la API se muestran bien y no hubo errores durante la generación. El modelo de datos generado es coherente con la API, los dos campos detectados (nombre e imagen) corresponden exactamente a lo que devuelve el endpoint. Visualmente el resultado es limpio y funcional, aunque el hero section quedó más básico de lo esperado. El despliegue automático funcionó sin problemas, el contenedor Docker arrancó correctamente y el sitio quedó accesible mediante su URL de previsualización.
 
 
 \subsection{Caso de uso 2: Dashboard de criptomonedas}
@@ -98,12 +99,12 @@ El segundo caso de uso utiliza la API pública de CoinLore, que devuelve datos d
 El prompt introducido por el usuario fue el siguiente:
 
 \begin{quote}
-\textit{Estética profesional. Color de fondo: \#0f0f0f, color de superficie: \#161616, color de borde: \#333333, color de acento: \#7c3aed. Números de métricas grandes en blanco, labels en gris. Tablas con filas alternadas en \#1a1a1a. Tipografía monoespaciada para números y datos. Botones primarios y elementos activos en violeta. Sin imágenes decorativas, todo datos y estructura con padding generoso entre secciones.}
+\textit{Tema oscuro. Fondo casi negro (\#0f0f0f), superficie un poco más clara (\#161616). Números de métricas grandes en blanco, etiquetas en gris. Filas de tablas alternadas en (\#1a1a1a). Tipografía monoespaciada para números y datos. Botones y elementos activos en violeta. Hazlo sin imágenes, todo datos y estructuras para las secciones.}
 \end{quote}
 
 El sistema detectó automáticamente los campos disponibles en la API y el LLM propuso un schema de tipo \texttt{dashboard} con el título \textit{Criptomonedas}. La generación completó los siete pasos sin errores ni reintentos.
 
-El sitio resultante es un panel de control con estética oscura y acento violeta. La página principal incluye cuatro tarjetas de métricas resumen en la parte superior con el total de monedas analizadas, el precio medio, el precio máximo y el precio mínimo del conjunto. Bajo las tarjetas aparece una barra de progreso de variación 24h que indica visualmente la proporción de monedas al alza frente a las bajistas, seguida de una tabla con el top 5 de criptomonedas por precio, mostrando rango, símbolo, nombre, precio en USD y cambio porcentual en 24 horas con badges coloreados. La segunda página muestra el listado completo de las 100 criptomonedas en tarjetas individuales con su rango, símbolo, nombre, precio, variación 24h, capitalización de mercado, volumen y oferta circulante, junto con un botón de detalle en violeta para cada entrada.
+El sitio resultante es un panel de control con estética oscura y acento violeta. La página principal incluye cuatro tarjetas de métricas resumen en la parte superior, estas son: total de monedas analizadas, precio medio, precio máximo y precio mínimo del conjunto. Abajo las tarjetas aparece una barra de progreso de variación 24h que indica visualmente la proporción de monedas al alza frente a la baja, seguida de una tabla con el top 5 de criptomonedas por precio, mostrando rango, símbolo, nombre, precio en USD y cambio porcentual en 24 horas con badges coloreados. La segunda página muestra el listado completo de las 100 criptomonedas en tarjetas individuales con su rango, símbolo, nombre, precio, variación 24h, capitalización de mercado, volumen y oferta circulante, junto con un botón de detalle en violeta para cada entrada.
 
 \begin{figure}[H]
     \centering
@@ -225,7 +226,7 @@ En la Tabla~\ref{tab:modelos-groq} se recoge la comparativa de modelos evaluados
 
 La segunda categoría agrupa los errores producidos por el propio LLM al generar el código del proyecto, independientemente de los límites del proveedor.
 
-\textbf{Acceso a subcampos de objetos anidados.} Cuando el dataset contiene campos que son objetos anidados, como \texttt{origin: {name: Earth'', url: ...''}}, el LLM tiende a tratarlos como objetos Django en el template usando la sintaxis \texttt{{{ item.origin.name }}}. Sin embargo, el modelo Django almacena ese campo como un \texttt{CharField} simple con solo el valor del nombre. El resultado es un error en tiempo de ejecución al intentar acceder a \texttt{.name} sobre un string. Este error es especialmente difícil de detectar automáticamente porque el verificador de consistencia solo comprueba que el primer nivel de campo exista en el modelo.
+\textbf{Acceso a subcampos de objetos anidados.} Cuando el dataset contiene campos que son objetos anidados, como \texttt{origin: {name: Earth, url: https...}}, el LLM tiende a tratarlos como objetos Django en el template usando la sintaxis \texttt{{{ item.origin.name }}}. Sin embargo, el modelo Django almacena ese campo como un \texttt{CharField} simple con solo el valor del nombre. El resultado es un error en tiempo de ejecución al intentar acceder a \texttt{.name} sobre un string. Este error es especialmente difícil de detectar automáticamente porque el verificador de consistencia solo comprueba que el primer nivel de campo exista en el modelo.
 
 \textbf{URLs hardcodeadas incorrectas en templates.} El LLM tiende a usar nombres de URL genéricos como \texttt{detail} o \texttt{catalog} en las etiquetas \texttt{url} aunque el prompt le indique los nombres exactos. Esto provoca errores \texttt{NoReverseMatch} en tiempo de ejecución. La solución aplicada fue añadir una validación en \texttt{check\_django\_syntax} que comprueba que todos los nombres de URL usados en los templates corresponden a URLs reales del proyecto.
 
