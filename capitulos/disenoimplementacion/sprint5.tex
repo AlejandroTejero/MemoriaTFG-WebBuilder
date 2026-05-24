@@ -68,7 +68,7 @@ Hasta el momento los templates HTML eran ficheros que incluían todas las seccio
 
 En cuanto a los templates se creó un nuevo módulo \textbf{partials}, encargado de contener los fragmentos que representan una sección concreta de cada página. Cada fichero principal pasó a contener sus partials, incluyendose mediante la etiqueta \textbf{include} de Django.
 
-La home del proyecto, que hasta entonces era el fichero más complejo, se dividió en seis partials independientes. En la Tabla~\ref{tab:partials-html} se muestra la estructura completa de partials tras el refactor:
+La home del proyecto, que hasta entonces era el fichero más complejo, se dividió en seis partials independientes. Aprovechando el momento también se divido el fichero assistant, en este caso tres partials. En la Tabla~\ref{tab:partials-html} se muestra la estructura completa de partials tras el refactor:
 
 \begin{table}[H]
     \centering
@@ -103,27 +103,22 @@ La home del proyecto, que hasta entonces era el fichero más complejo, se dividi
     \label{tab:partials-html}
 \end{table}
 
-El asistente se dividió en tres partials dentro de \texttt{templates/WebBuilder/partials/assistant/}:
+El historial también se dividió en dos partials:
 
-\begin{itemize}
-    \item \texttt{input.html} — formulario del paso 1, donde el usuario 
-    introduce la URL de la API o sube un fichero local para su análisis
-    \item \texttt{analysis.html} — resultado del paso 2, que muestra las 
-    estadísticas del dataset analizado: número de items encontrados, campos 
-    disponibles y ruta de la colección principal
-    \item \texttt{preview.html} — resultado del paso 3, donde se muestra 
-    el schema propuesto por la IA y el usuario puede revisarlo y aprobarlo 
-    antes de continuar
-\end{itemize}
-
-El historial se dividió en dos partials dentro de \texttt{templates/WebBuilder/partials/history/}:
-
-\begin{itemize}
-    \item \texttt{published\_sites.html} — listado de sitios ya generados 
-    y desplegados por el usuario
-    \item \texttt{recent\_analysis.html} — listado de análisis recientes 
-    realizados por el usuario
-\end{itemize}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{5cm}|}
+    \hline
+    \textbf{Partial} & \textbf{Página} & \textbf{Responsabilidad} \\
+    \hline
+        published\_sites.html & history & Listado de sitios generados y desplegados por el usuario \\
+    \hline
+        recent\_analysis.html & history & Listado de análisis recientes realizados por el usuario \\
+    \hline
+    \end{tabular}
+    \caption{Partials HTML del historial tras el refactor de templates}
+    \label{tab:partials-history}
+\end{table}
 
 Los ficheros estáticos sufrieron una reorganización equivalente. 
 El CSS pasó a estar organizado por página y por sección dentro de \texttt{static/css/}, como se muestra en la Tabla~\ref{tab:ficheros-css}:

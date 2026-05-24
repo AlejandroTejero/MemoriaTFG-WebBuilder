@@ -247,11 +247,16 @@ El panel se estructura en seis vistas independientes (Resumen, Actividad, LLM, A
 \subsection{Resumen general}
 \label{subsec:metricas-resumen}
 
-El sistema acumula 67 análisis de APIs realizados, de los cuales 61 han sido generados con éxito. Esto supone una tasa de éxito del análisis del 95.5\% y una conversión análisis-a-sitio del 91\%, lo que indica que el flujo completo desde la ingesta de datos hasta la generación final es estable y fiable. La tasa de reintentos del LLM se mantiene en el 0\%, dentro del rango esperado para los modelos seleccionados como recomendados tras los ajustes descritos en la Sección~\ref{subsec:metricas-llm}.
+El sistema acumula 67 análisis de APIs realizados, de los cuales 61 han sido generados con éxito. Esto supone una tasa de éxito del análisis del 95.5\% y una conversión análisis a sitio del 91\%, lo que indica que el flujo completo desde la ingesta de datos hasta la generación final es estable y fiable.
+
+La tasa de reintentos del planner se sitúa en el 0\%, lo que refleja
+que en ninguno de los 67 análisis realizados el LLM necesitó un segundo
+intento para devolver un esquema válido. Este resultado es consecuencia
+den gran parte por el parsea realizado antes de entregar al LLM.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{img/webbuilder/disenoimplementacion/eleccion-llm.png}
+    \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/resumen.png}
     \caption{Panel de }
     \label{fig:metricas-resumen}
 \end{figure}
@@ -288,8 +293,6 @@ El sistema acumula 456 llamadas totales al LLM, repartidas entre los cuatro mode
 
 El modelo \texttt{llama-4-scout} acumula la inmensa mayoría de las llamadas tras ser el modelo mas adecuado por su equilibrio entre calidad y límites de TPM, mientras que \texttt{groq/compound} fue descartado tras detectar el problema de tamaño máximo de petición. 
 
-La tasa de errores de consistencia es del 0\% en todos los modelos, lo que valida la eficacia del sistema de verificación de código generado descrito en la Sección~\ref{subsec:errores-codigo}.
-
 El número medio de llamadas por sitio generado es de 7.5, coherente con los 7 pasos del generador más alguna llamada adicional de validación.
 
 \begin{figure}[H]
@@ -302,7 +305,18 @@ El número medio de llamadas por sitio generado es de 7.5, coherente con los 7 p
 \subsection{Alertas y estabilidad}
 \label{subsec:metricas-alertas}
 
-El panel de alertas detecta incidencias del sistema como generaciones bloqueadas, análisis pendientes o errores recientes. En el momento de la captura no había alertas activas ni errores registrados en las últimas 24 horas.
+El panel de alertas monitoriza tres tipos de incidencias: generaciones
+bloqueadas en estado \texttt{generating} durante más de 15 minutos,
+análisis en estado \texttt{pending} sin procesar, y errores de
+generación registrados en las últimas 24 horas.
+
+Durante el período de experimentación no se registró ninguna alerta
+activa. Este resultado es por las siguientes razones: el workflow de auto-shutdown de n8n evita
+que los contenedores queden bloqueados indefinidamente, el sistema de
+fallbacks garantiza que toda generación concluye con un proyecto
+desplegable aunque algún paso falle, y el mecanismo de reintento
+absorbe los errores puntuales del LLM antes de que lleguen a
+propagarse como errores definitivos.
 
 \begin{figure}[H]
     \centering

@@ -11,7 +11,8 @@
 % Configuracion de idioma, traduce automaticamente
 \usepackage[spanish]{babel}
 % Permite escribir URLs sin que se rompa el texto
-\usepackage{url}
+% \usepackage{url}
+\usepackage{xurl}
 % Permite insertar imagenes con \includegraphics
 \usepackage{graphicx}
 % Permite usar [H] en las figuras para forzar su posicion
@@ -104,8 +105,10 @@
 %\bibliographystyle{abbrv}
 
 % BIBLIOGRAFIA ORDENADA NUMERICAMENTE
-\bibliographystyle{unsrt}
+% \bibliographystyle{unsrt}
+% BIBLIOGRAFIA NUMERADA Y CON URL
+\bibliographystyle{unsrturl}
 % Memoria.bib es el nombre del fichero que contiene las referencias bibliográficas
-\bibliography{memoria}  . Abre ese fichero y mira el formato que tiene,
+\bibliography{memoria}
 
 \end{document}
