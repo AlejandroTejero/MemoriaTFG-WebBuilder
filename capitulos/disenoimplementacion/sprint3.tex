@@ -1,7 +1,7 @@
 \section{Sprint 3: Integración LLM y n8n}
 \label{sec:integracion-llm-n8n}
 
-Con el sprint 2 terminada y viendo que las limitaciones eran evidentes, se tomó la decisión de realizar un cambio fundamental para el futuro del proyecto. Se abandonó 
+Con el sprint 2 terminado y viendo que las limitaciones eran evidentes, se tomó la decisión de realizar un cambio fundamental para el futuro del proyecto. Se abandonó 
 la idea del sistema de reglas, aunque no en la totalidad, ya que algunas partes nos seguirían siendo útiles. Se decidió integrar un
 modelo de lenguaje (LLM) como núcleo o motor del análisis y generación de las páginas. Hasta este momento el sistema intentaba entender los datos mediante
 puntuaciones y comparaciones. A partir de este punto, se decidió que fuese la Inteligencia Artificial la encargada de escoger y proponer la estructura del sitio y decidiera que 
@@ -46,13 +46,6 @@ La función mencionada anteriormente acepta tres parámetros principales:
 
 El primer proveedor utilizado fue OpenRouter, con el modelo de meta-llama: \\
 \texttt{llama-3.3-70b-instruct:free}, de acceso gratuito y potencia más que suficiente para las primeras pruebas.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\textwidth]{img/webbuilder/disenoimplementacion/logs-generacion.png}
-    \caption{Ejemplo logs de generación de proyecto}
-    \label{fig:Ejemplo logs de generacion}
-\end{figure}
 
 \subsection{Planner schema}
 \label{subsec:planner-schema}
@@ -152,7 +145,7 @@ examples (1-3 items reales del dataset):
 Esta rigidez sobre el formato de salida es intencionada, ya que tras la 
 realización de varias pruebas, los fallos generados por los diferentes LLM 
 siempre eran parecidos. Como esa respuesta se usa directamente en el sistema, 
-cualquier texto adicional rompe el proceso de parseo.
+cualquier texto adicional produce fallo y rompe el proceso de parseo.
 
 De todas formas, debido a las alucinaciones de algunos modelos y a que en 
 ocasiones ignoraban las restricciones de formato, se aplicaba una limpieza 
@@ -186,8 +179,7 @@ Los errores más comunes siempre sucedían por la misma causa, las alucinaciones
     respuesta. Por ejemplo, si el prompt contiene la línea 
     \texttt{"available\_keys": ["name", "date", "url"]}, el modelo puede devolver 
     \texttt{available\_keys} como uno de los campos seleccionados, cuando en 
-    realidad es una etiqueta del propio prompt. Cualquier clave que coincida con 
-    esta lista se descarta automáticamente.
+    realidad es una etiqueta del propio prompt.
     
     \item \textbf{Detección de valores disfrazados de claves}: se detectan los 
     casos en los que el modelo introduce un valor concreto del dataset donde 
@@ -248,10 +240,10 @@ En paralelo a la integración del LLM, durante este sprint se incorporó n8n al 
 
 n8n se instaló en un contenedor Docker siguiendo la imagen oficial, quedando disponible en \texttt{localhost:5678}. Una vez levantado el entorno, se creó el primer flujo en n8n y se configuró el primer webhook, apuntando a la ruta \texttt{/webhook-test/WebBuilder-Register}. El prefijo \texttt{webhook-test} indica que el webhook estaba en modo de prueba, el modo que n8n ofrece para verificar que el flujo funciona correctamente antes de activarlo en producción.
 
-La integración en Django se realizó en \texttt{views/auth.py}, donde se añadió la función\texttt{llamar\_webhook}. El nodo se encargaría de notificar a los usuarios recién registrados: Django realizaba una llamada POST a ese webhook con el nombre de usuario y el email del recién registrado, y n8n enviaba automáticamente un correo de bienvenida 
+La integración en Django se realizó en \texttt{views/auth.py}, donde se añadió la función \texttt{llamar\_webhook}. El nodo se encargaría de notificar a los usuarios recién registrados: Django realizaba una llamada POST a ese webhook con el nombre de usuario y el email del recién registrado, y n8n enviaba automáticamente un correo de bienvenida 
 personalizado a esa dirección. Más adelante se completaría el flujo con el webhook de login.
 
-La función estaba diseñada para ser completamente transparente al flujo principal: si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente y el registro continuaba con normalidad. Esto garantizaba que un fallo en el sistema de notificaciones nunca pudiera bloquear el acceso a la aplicación.
+La función estaba diseñada para ser completamente transparente al flujo principal, si n8n no estaba disponible o la llamada fallaba, la excepción se capturaba silenciosamente y el registro continuaba con normalidad. Esto garantizaba que un fallo en el sistema de notificaciones nunca pudiera bloquear el acceso a la aplicación.
 
 
 \begin{figure}[H]

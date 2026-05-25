@@ -43,7 +43,7 @@ en cuatro ficheros encargados cada uno de una labor especifica dentro de
 
     \item \textbf{\texttt{fallbacks.py}}: Agrupó todos los fallbacks de 
     emergencia en un único fichero. Cada función de este módulo generaba una 
-    versión mínima pero funcional de un artefacto concreto del proyecto: 
+    versión mínima pero funcional de un fichero concreto del proyecto: 
     páginas, modelos, vistas o templates. Al tenerlos centralizados resultaba 
     mucho más sencillo mejorarlos o ajustarlos sin tocar el orquestador principal.
 
@@ -94,10 +94,6 @@ La home del proyecto, que hasta entonces era el fichero más complejo, se dividi
         \hline
         preview.html & assistant & Schema propuesto por la IA \\
         \hline
-        published\_sites.html & history & Sitios generados y desplegados \\
-        \hline
-        recent\_analysis.html & history & Análisis recientes del usuario \\
-        \hline
     \end{tabular}
     \caption{Partials HTML tras el refactor de templates}
     \label{tab:partials-html}
@@ -120,76 +116,25 @@ El historial también se dividió en dos partials:
     \label{tab:partials-history}
 \end{table}
 
-Los ficheros estáticos sufrieron una reorganización equivalente. 
-El CSS pasó a estar organizado por página y por sección dentro de \texttt{static/css/}, como se muestra en la Tabla~\ref{tab:ficheros-css}:
+Los ficheros estáticos sufrieron un refactor equivalente.
+El CSS pasó a estar organizado por página y por sección dentro de
+\texttt{static/css/}, separando los estilos de la página principal
+en una subcarpeta \texttt{home/} con un fichero por sección, y
+manteniendo un fichero independiente para cada vista principal de
+la aplicación: el asistente, el historial, la edición del schema,
+el login y la barra de navegación, además de un fichero compartido
+para fondos y efectos visuales globales.
 
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|p{8cm}|}
-        \hline
-        \textbf{Fichero} & \textbf{Responsabilidad} \\
-        \hline
-        home/hero.css & Estilos de la sección principal de bienvenida \\
-        \hline
-        home/examples.css & Estilos de la sección de ejemplos \\
-        \hline
-        home/how.css & Estilos de la sección de funcionamiento \\
-        \hline
-        home/llms.css & Estilos de la sección de modelos compatibles \\
-        \hline
-        home/metrics.css & Estilos de la sección de métricas públicas \\
-        \hline
-        home/cta.css & Estilos de la sección de acceso \\
-        \hline
-        assistant.css & Estilos del asistente de generación \\
-        \hline
-        history.css & Estilos del historial del usuario \\
-        \hline
-        edit.css & Estilos de la página de edición del schema \\
-        \hline
-        login.css & Estilos de las páginas de login y registro \\
-        \hline
-        navbar.css & Estilos de la barra de navegación \\
-        \hline
-        backgrounds.css & Fondos y efectos visuales compartidos \\
-        \hline
-    \end{tabular}
-    \caption{Ficheros CSS tras la reorganización de estilos}
-    \label{tab:ficheros-css}
-\end{table}
-
-El JavaScript siguió el mismo criterio con ficheros independientes por página en \texttt{static/js/}, como se muestra en la Tabla~\ref{tab:ficheros-js}:
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|p{8cm}|}
-        \hline
-        \textbf{Fichero} & \textbf{Responsabilidad} \\
-        \hline
-        home.js & Lógica interactiva de la home \\
-        \hline
-        assistant.js & Lógica del flujo del asistente \\
-        \hline
-        edit.js & Lógica de la edición del schema \\
-        \hline
-        site\_render.js & Lógica de la vista previa del sitio generado \\
-        \hline
-    \end{tabular}
-    \caption{Ficheros JavaScript tras la reorganización}
-    \label{tab:ficheros-js}
-\end{table}
-
-
-El \texttt{base.html} se actualizó para cargar las fuentes de Google Fonts 
-necesarias para el nuevo diseño: Inter para el texto general, 
-y Geist y Geist Mono para elementos de código y datos técnicos.
+El JavaScript siguió el mismo criterio, con ficheros independientes
+por página en \texttt{static/js/}: uno para la lógica interactiva
+de la home, otro para el flujo del asistente, otro para la edición
+del schema y un último para la vista previa del sitio generado.
 
 Esta reorganización, aunque invisible para el usuario final, facilitó enormemente el mantenimiento y la evolución de la interfaz en los sprints siguientes, ya que cualquier cambio en una sección concreta de una página solo requería tocar un fichero pequeño y bien delimitado.
 
 La Figura~\ref{fig:previewold} muestra el aspecto del asistente tras el 
 refactor visual, donde se puede apreciar el nuevo layout de dos columnas, 
-el esquema generado por la IA visible en tiempo real a la derecha, 
+el esquema generado por la IA a la derecha, 
 el selector de modelo LLM y los nuevos controles de idioma y tema.
 
 \begin{figure}[H]

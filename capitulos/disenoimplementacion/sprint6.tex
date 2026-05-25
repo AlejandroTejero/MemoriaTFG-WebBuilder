@@ -18,7 +18,7 @@ El parseo de cada formato tenía su propia función:
 
 \begin{itemize}
     \item \textbf{CSV}: se utilizó la librería estándar \texttt{csv} de Python con detección automática del dialecto mediante \texttt{csv.Sniffer}. La lectura se limitaba a 2000 filas para evitar problemas de memoria con ficheros muy grandes.
-    \item \textbf{GeoJSON}: cada \texttt{Feature} del \texttt{FeatureCollection} se aplanaba extrayendo sus propiedades como un diccionario plano, añadiendo además el tipo de geometría como campo \texttt{geometry\_type}. De esta forma el resto del sistema podía tratar el resultado igual que cualquier otro JSON.
+    \item \textbf{GeoJSON}: cada \texttt{Feature} del \texttt{FeatureCollection} se aplanaba extrayendo sus propiedades como un diccionario. De esta forma el resto del sistema podía tratar el resultado igual que cualquier otro JSON.
 \end{itemize}
 
 \subsection{Ejemplos few-shot por tipo de sitio}
@@ -131,8 +131,7 @@ En segundo lugar, se implementó un selector de modelo completo, accesible desde
 \end{figure}
 
 
-El catálogo cubría los casos más habituales, pero existía la necesidad de 
-permitir que cualquier usuario pudiera conectar su propio proveedor de LLM, 
+El catálogo cubría los casos más habituales, pero existía la posibilidad de que cualquier usuario pudiera conectar su propio proveedor de LLM, 
 ya fuera uno privado, uno de pago con mejores capacidades o simplemente uno 
 diferente a los disponibles en el catálogo. Para soportar esto se creó el 
 modelo \texttt{UserProfile}, vinculado en relación \texttt{OneToOne} con el 

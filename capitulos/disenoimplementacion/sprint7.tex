@@ -7,9 +7,9 @@ Esta último sprint se dedicó a pulir el sistema en todos sus puntos débiles, 
 \subsection{Sistema de presets visuales}
 \label{subsec:sistema-presets-visuales}
 
-Uno de los principales problema durante todo el desarrollo fue que los proyectos tendían a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
+Uno de los principales problemas durante todo el desarrollo fue que los proyectos tendían a parecerse entre si visualmente, independiente del tipo de contenido de la API, del prompt del usuario y del sitio generado. Para resolverlo se creó el módulo \textbf{utils/llm/design}, organizado en tres ficheros con responsabilidades distintas. Estos ficheros eran presets.py, snippets.py y theme\_rules.py.
 
-El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe de forma exhaustiva la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en este sprint se muestran en la Tabla~\ref{tab:presets-visuales}:
+El fichero \texttt{presets.py} define un catálogo de estilos visuales completos y muy distintos entre sí. Cada preset describe la paleta de colores, el tipo de layout, la estética de los componentes y las palabras clave del prompt del usuario que deben activarlo. Los presets disponibles en este sprint se muestran en la Tabla~\ref{tab:presets-visuales}:
 
 \begin{table}[H]
     \centering
@@ -17,9 +17,9 @@ El fichero \texttt{presets.py} define un catálogo de estilos visuales completos
         \hline
         \textbf{Preset} & \textbf{Estética} & \textbf{Palabras clave activadoras} \\
         \hline
-        Neo Terminal & Cyberpunk, fondo negro, acento neón & terminal, dark, gaming, futurista \\
+        Neo Terminal & Cyberpunk, fondo negro, acento neón & Terminal, dark, gaming, futurista \\
         \hline
-        Bento Pop & Rejilla asimétrica, colores vivos & bento, mosaico, asimétrico \\
+        Bento Pop & Rejilla asimétrica, colores vivos & Mosaico, asimétrico \\
         \hline
         Quiet Editorial & Tipografía protagonista, estética revista & Por defecto para blogs \\
         \hline
@@ -36,7 +36,7 @@ Cada tipo de sitio tiene asignado un preset por defecto que se aplica cuando el 
 
 El fichero \texttt{snippets.py} complementa los presets con fragmentos de HTML concretos y válidos para cada estilo: cards, heros y filas de listado con las clases Tailwind exactas que corresponden a cada preset. Estos snippets se incluyen en los prompts de generación de templates como ejemplos de referencia visual, asegurando que el LLM produzca código coherente con el estilo elegido.
 
-El fichero \texttt{theme\_rules.py} centraliza tokens visuales reutilizables como clases base para contenedores, cards, botones, badges y tipografía, junto con reglas críticas de uso de color para evitar que el LLM genere clases Tailwind inválidas, como \texttt{bg-\#111111} en lugar de la sintaxis correcta \texttt{bg-[\#111111]}.
+El fichero \texttt{theme\_rules.py} contiene clases base para contenedores, cards, botones, badges y tipografía, junto con reglas críticas de uso de color para evitar que el LLM genere clases Tailwind inválidas, como \texttt{bg-\#111111} en lugar de la sintaxis correcta \texttt{bg-[\#111111]}.
 
 \subsection{Migración a PostgreSQL}
 \label{subsec:migracion-postgresql}
@@ -69,7 +69,8 @@ n8n recibe este payload y envía automáticamente un correo de notificación al 
 \subsection{Workflow health-check}
 \label{subsec:workflow-health-check}
 
-El workflow de \emph{health-check} se configuró para ejecutarse automáticamente cada día mediante un nodo \emph{Schedule Trigger} de n8n. Su función es verificar que el sistema sigue operativo realizando una petición HTTP a la URL principal de WebBuilder y comprobando que la respuesta es correcta. Si la verificación falla, n8n envía una alerta por correo al administrador del sistema con información sobre el error detectado. Este workflow fue especialmente útil durante las últimas fases de desarrollo para detectar caídas del servidor sin necesidad de monitorización manual.
+El workflow de \emph{health-check} se configuró para ejecutarse automáticamente cada día mediante un nodo \emph{Schedule Trigger} de n8n. Su función es verificar que el sistema sigue operativo realizando una petición HTTP a la URL principal de WebBuilder y comprobando que la respuesta es correcta. Si la verificación falla, n8n envía una alerta por correo al administrador del sistema con información sobre el error detectado. Aunque su uso fue puntual durante las últimas fases 
+de desarrollo, ayudó a la monitorización del sistema para comprobar su correcto funcionamiento.
 
 \begin{figure}[H]
     \centering
@@ -82,7 +83,7 @@ El workflow de \emph{health-check} se configuró para ejecutarse automáticament
 \subsection{Workflow auto-shutdown}
 \label{subsec:workflow-auto-shutdown}
 
-El workflow de \emph{auto-shutdown} resolvió un problema operativo importante: los contenedores Docker de los sitios generados permanecían activos indefinidamente aunque nadie los estuviera usando, consumiendo recursos del servidor. Este workflow se ejecuta de forma programada cada hora, consulta la lista de contenedores activos con el prefijo \texttt{wb\_} y detiene aquellos que llevan inactivos más de un tiempo configurable. Esto permite mantener el servidor limpio y los recursos disponibles para nuevas generaciones sin intervención manual.
+El workflow de \emph{auto-shutdown} resolvió un problema operativo importante: los contenedores Docker de los sitios generados permanecían activos indefinidamente aunque nadie los estuviera usando, consumiendo recursos del servidor. Este workflow se ejecuta de forma programada cada hora, consulta la lista de contenedores activos con el prefijo \texttt{wb\_} y detiene aquellos que están inactivos. Esto permite mantener el servidor limpio y los recursos disponibles para nuevas generaciones sin intervención manual.
 
 \begin{figure}[H]
     \centering
@@ -95,7 +96,7 @@ El workflow de \emph{auto-shutdown} resolvió un problema operativo importante: 
 \subsection{Mejora del workflow de despliegue}
 \label{subsec:mejora-workflow-despliegue}
 
-El workflow de despliegue que se había construido en el Sprint 4 carecía de un mecanismo centralizado de gestión de errores. Si cualquiera de los nodos fallaba, la petición de Django quedaba sin respuesta. En este sprint se añadió el nodo \textbf{Responder Error}, que actúa como rama de error compartida para todos los nodos del workflow. Cuando cualquier paso falla, este nodo captura el error y devuelve a Django una respuesta JSON estructurada con el código HTTP 500, un mensaje descriptivo del error y el paso en el que ocurrió. Esto permite que Django actualice el estado del sitio a \texttt{error} y muestre un mensaje útil al usuario en lugar de dejar la operación colgada indefinidamente.
+El workflow de despliegue que se había construido en el Sprint 4 carecía de un mecanismo centralizado de gestión de errores. Si cualquiera de los nodos fallaba, la petición de Django quedaba sin respuesta. En este sprint se añadió el nodo \textbf{Responder Error}, que actúa como rama de error compartida para todos los nodos del workflow. Cuando cualquier paso falla, este nodo captura el error y devuelve a Django una respuesta JSON estructurada con el código HTTP 500, un mensaje descriptivo del error y el paso en el que ocurrió. Esto permite que Django actualice el estado del sitio a \texttt{error} y muestre un mensaje útil al usuario, anteriormente se notificaba el error, pero no en detalle.
 
 \begin{figure}[H]
     \centering

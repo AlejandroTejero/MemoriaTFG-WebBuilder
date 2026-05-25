@@ -6,16 +6,16 @@ Antes de comenzar a detallar los diferentes sprints donde se explica el desarrol
 Como se muestra en la Figura~\ref{fig:arquitectura-general}, el sistema se divide en tres bloques principales, descritos a continuación.
 
 
-El primero es \textbf{Django}, que actúa como núcleo de la aplicación. Dentro de este bloque, el módulo de ingestión se encarga de validar la URL introducida por el usuario,descargar el contenido de la API de forma segura y detectar automáticamente el formato de los datos, ya sea JSON, XML, CSV o GeoJSON. A continuación, el módulo de análisis LLM procesa la estructura del dataset y propone un schema con los campos más relevantes,que el usuario puede revisar y modificar antes de continuar. Una vez aceptado el plan, el generador produce un proyecto Django completo en siete pasos secuenciales, generando desde los modelos y vistas hasta los templates HTML y los ficheros de infraestructura necesarios para el despliegue. Todo el proceso queda registrado en la base de datos PostgreSQL, que almacena tanto los modelos de la aplicación como los logs de cada llamada al LLM para facilitar la depuración. Finalmente, el módulo de notificaciones informa al usuario en los momentos clave del flujo: al registrarse, al iniciar sesión y cuando su sitio ha sido generado correctamente.
+El primero es \textbf{Django}, que actúa como núcleo de la aplicación. Dentro de este bloque, el módulo de ingestión se encarga de validar la URL introducida por el usuario, descargar el contenido de la API de forma segura y detectar automáticamente el formato de los datos, ya sea JSON, XML, CSV o GeoJSON. A continuación, el módulo de análisis LLM procesa la estructura del dataset y propone un schema con los campos más relevantes, que el usuario puede revisar y modificar antes de continuar. Una vez aceptado el plan, el generador produce un proyecto Django completo en siete pasos secuenciales, generando desde los modelos y vistas hasta los templates HTML y los ficheros de infraestructura necesarios para el despliegue. Todo el proceso queda registrado en la base de datos PostgreSQL, que almacena tanto los modelos de la aplicación como los logs de cada llamada al LLM para facilitar la depuración. Finalmente, el módulo de notificaciones informa al usuario en los momentos clave del flujo: al registrarse, al iniciar sesión y cuando su sitio ha sido generado correctamente.
 
 El segundo bloque es \textbf{n8n}, que gestiona las automatizaciones más costosas en tiempo y que no pueden ejecutarse de forma síncrona desde Django. 
 En total se desarrollaron seis workflows, agrupados en dos categorías. 
-Por un lado, los workflows de \textbf{autenticación y notificación}: 
+Por un lado, los workflows de autenticación y notificación: 
 \textit{Register} envía un correo de bienvenida al usuario al registrarse; 
 \textit{Login} notifica al usuario cada vez que inicia sesión; y 
 \textit{generation-done} le informa cuando su sitio ha sido generado 
 correctamente. 
-Por otro lado, los workflows de \textbf{infraestructura}: 
+Por otro lado, los workflows de infraestructura: 
 \textit{deploy} recibe la señal de Django mediante un webhook, construye 
 la imagen Docker del proyecto generado, arranca el contenedor en un puerto 
 libre y verifica que el sitio ha quedado operativo antes de devolver la URL 
