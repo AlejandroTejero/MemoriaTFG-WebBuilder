@@ -50,11 +50,11 @@ y nombre de cada uno. El endpoint utilizado fue:
 \texttt{https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=Cocktail}
 \end{center}
 
-El prompt introducido por el usuario fue el siguiente:
+El prompt introducido fue el siguiente:
 
 \begin{quote}
 	\textit{Genera una web de recetas de cócteles con una estética elegante y clara. Muestra todos los cócteles 
-	en una cuadrícula visual con su imagen y nombre. La página principal debe tener una sección hero que dé la bienvenida al usuario a la experiencia del bar.}
+	en una cuadrícula visual con su imagen y nombre. La página principal debe tener una sección hero que dé la bienvenida al usuario al bar.}
 \end{quote}
 
 El sistema analizó la API, detectó automáticamente dos campos: el nombre del cóctel y la URL de su imagen. 
@@ -96,10 +96,10 @@ El segundo caso de uso utiliza la API pública de CoinLore, que devuelve datos d
     \texttt{https://api.coinlore.net/api/tickers/}
 \end{center}
 
-El prompt introducido por el usuario fue el siguiente:
+El prompt introducido en este caso fue mas detallado, con gamas de colores y diferentes tonalidades, para comprorbar el correcto funcionamiento:
 
 \begin{quote}
-\textit{Tema oscuro. Fondo casi negro (\#0f0f0f), superficie un poco más clara (\#161616). Números de métricas grandes en blanco, etiquetas en gris. Filas de tablas alternadas en (\#1a1a1a). Tipografía monoespaciada para números y datos. Botones y elementos activos en violeta. Hazlo sin imágenes, todo datos y estructuras para las secciones.}
+\textit{Quiero un dashboard con tema oscuro. Fondo casi negro (\#0f0f0f), superficie un poco más clara (\#161616). Números de métricas grandes en blanco, etiquetas en gris. Filas de tablas alternadas en (\#1a1a1a). Tipografía monoespaciada para números y datos. Botones y elementos activos en violeta. Hazlo sin imágenes, todo datos y estructuras para las secciones.}
 \end{quote}
 
 El sistema detectó automáticamente los campos disponibles en la API y el LLM propuso un schema de tipo \texttt{dashboard} con el título \textit{Criptomonedas}. La generación completó los siete pasos sin errores ni reintentos.
@@ -143,7 +143,7 @@ El tercer caso de uso utiliza la API pública de Rick and Morty, que devuelve un
 El prompt introducido por el usuario fue el siguiente:
 
 \begin{quote}
-\textit{Genera una web de catálogo de personajes de la serie Rick y Morty. Muestra todos los personajes en una cuadrícula con su foto, nombre, especie y estado. Cada personaje debe tener su propia página de detalle con toda la información disponible: origen, localización y número de episodios en los que aparece. La página principal debe tener una sección hero de bienvenida y una sección con personajes destacados. Usa un estilo moderno inspirado en la estética de ciencia ficción de la serie.}
+\textit{Genera una web de personajes de la serie. Muestra todos los personajes en una cuadrícula con su foto, nombre, especie y estado. Cada personaje debe tener su propia página de detalle con toda la información disponible: origen, localización y número de episodios en los que aparece. La página principal debe tener una sección hero de bienvenida y una sección con personajes destacados. Usa un estilo moderno inspirado en la estética de ciencia ficción de la serie.}
 \end{quote}
 
 El sistema detectó automáticamente los campos disponibles y el LLM propuso un schema de tipo \texttt{catalog} con el título \textit{Rick y Morty Catalog}. La generación completó los siete pasos sin errores ni reintentos.
@@ -153,14 +153,7 @@ El sitio resultante incluye una página principal con hero section con imagen de
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{img/casosdeuso/rickmorty/home1.png}
-    \caption{Parte superior de la pagina principal de Rick y Morty}
-    \label{fig:rickmorty-home}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{img/casosdeuso/rickmorty/home2.png}
-    \caption{Parte inferior de la pagina principal de Rick y Morty}
+    \caption{Home de la página de Rick y Morty}
     \label{fig:rickmorty-home}
 \end{figure}
 
@@ -178,13 +171,13 @@ El sitio resultante incluye una página principal con hero section con imagen de
     \label{fig:rickmorty-detalle}
 \end{figure}
 
-En cuanto a la evaluación del caso, el sitio funciona correctamente en todas sus páginas. El modelo de datos generado es coherente con la API y todos los campos se muestran correctamente. El resultado visual es el más completo de los tres casos: el catálogo con badges de estado coloreados y las páginas de detalle bien estructuradas demuestran la capacidad del sistema para generar interfaces funcionales y visualmente cuidadas a partir de datos con cierta complejidad. El despliegue automático funcionó correctamente y el contenedor quedó accesible mediante su URL de previsualización.
+En cuanto a la evaluación del caso, el sitio funciona correctamente en todas sus páginas. El modelo de datos generado es coherente con la API y todos los campos se muestran correctamente. El resultado visual es completo y el despliegue automático funcionó correctamente quedando el contenedor accesible mediante su URL de previsualización.
 
 
 \subsection{Análisis de errores}
 \label{subsec:analisis-errores}
 
-Durante el proceso de desarrollo y pruebas de WebBuilder se identificaron y documentaron de forma sistemática los principales errores que afectaban a la calidad de las generaciones. Estos errores se agrupan en dos categorías: limitaciones impuestas por los propios modelos de lenguaje y errores en el código generado por el LLM.
+Durante el proceso de desarrollo y pruebas de WebBuilder se identificaron y documentaron los principales errores que afectaban a la calidad de las generaciones. Estos errores se agrupan en dos categorías: limitaciones impuestas por los propios modelos de lenguaje y errores en el código generado por el LLM.
 
 \subsubsection{Errores de limitación del LLM}
 \label{subsubsec:errores-llm}
@@ -194,7 +187,7 @@ La primera categoría de errores está relacionada con los límites de uso de lo
 
 \textbf{Error HTTP 429 — Rate Limit Exceeded.} El error más frecuente durante las pruebas fue la superación del límite de tokens por minuto del modelo. El prompt del paso de generación de templates es especialmente grande, ya que incluye el prompt enriquecido, los campos del modelo, los datos de ejemplo y un fragmento HTML de referencia. Cuando este prompt superaba los tokens disponibles en el minuto en curso, la llamada fallaba y el template afectado caía al fallback vacío, generando una página en blanco. La solución aplicada fue reducir el tamaño máximo del prompt enriquecido, eliminar los datos de ejemplo del paso de estructura de páginas y truncar el ejemplo HTML de referencia a 1500 caracteres.
 
-\textbf{Error HTTP 413 — Request Entity Too Large.} Algunos modelos como \texttt{groq/compound} rechazan peticiones que superan un cierto tamaño en bytes antes de procesarlas, independientemente del límite de TPM. Este error afectaba prácticamente a todos los pasos de la generación, dejando el proyecto resultante vacío o lleno de fallbacks. La solución fue descartar este modelo del catálogo recomendado y sustituirlo por \texttt{meta-llama/llama-4-scout-17b-16e-instruct}, que ofrece 30K TPM sin restricciones de tamaño de petición.
+\textbf{Error HTTP 413 — Request Entity Too Large.} Algunos modelos como \texttt{groq/compound} rechazan peticiones que superan un cierto tamaño en bytes antes de procesarlas, independientemente del límite de TPM. Este error afectaba prácticamente a todos los pasos de la generación, dejando el proyecto resultante vacío o lleno de fallbacks. La solución fue descartar este modelo del catálogo recomendado y sustituirlo por \\ \texttt{meta-llama/llama-4-scout-17b-16e-instruct}, que ofrece 30K TPM sin restricciones de tamaño de petición.
 
 \textbf{Timeout por \texttt{time.sleep} excesivo.} Durante las pruebas se intentó evitar el error 429 aumentando el tiempo de espera entre llamadas al LLM hasta 60 segundos. El resultado fue que el servidor web cortaba la conexión por timeout antes de que terminara la generación. La conclusión fue que el sleep no debe superar los 20 segundos y que la solución correcta al problema de TPM es reducir el tamaño de los prompts, no aumentar la espera entre llamadas.
 
@@ -230,7 +223,14 @@ La segunda categoría agrupa los errores producidos por el propio LLM al generar
 
 \textbf{URLs hardcodeadas incorrectas en templates.} El LLM tiende a usar nombres de URL genéricos como \texttt{detail} o \texttt{catalog} en las etiquetas \texttt{url} aunque el prompt le indique los nombres exactos. Esto provoca errores \texttt{NoReverseMatch} en tiempo de ejecución. La solución aplicada fue añadir una validación en \texttt{check\_django\_syntax} que comprueba que todos los nombres de URL usados en los templates corresponden a URLs reales del proyecto.
 
-\textbf{\texttt{json.loads} sobre un dict ya parseado.} Cuando el dataset tiene campos anidados, el LLM a veces genera en \texttt{load\_data.py} llamadas a \texttt{json.loads()} sobre campos que ya han sido deserializados por \texttt{response.json()}. El resultado es un \texttt{json.JSONDecodeError} que hace que todos los items fallen silenciosamente y no se cargue ningún dato en la base de datos.
+\textbf{\texttt{json.loads} sobre un campo ya deserializado.} Cuando el 
+dataset contiene campos anidados, el LLM genera en ocasiones llamadas a 
+\texttt{json.loads()} sobre valores que \\ \texttt{response.json()} ya ha 
+convertido a diccionario Python. Al intentar deserializar un objeto que 
+no es una cadena de texto, Python lanza un \texttt{json.JSONDecodeError} 
+que provoca que todos los registros fallen silenciosamente durante la 
+carga, dejando la base de datos vacía sin ningún mensaje de error visible 
+para el usuario.
 
 \textbf{Variables de contexto inconsistentes entre view y template.} En ocasiones el LLM usa nombres semánticamente descriptivos en la view, como \texttt{featured} o \texttt{recent}, en lugar del nombre estándar \texttt{items} que usan los templates. El resultado es que la página aparece vacía aunque haya datos en la base de datos. La solución fue reforzar en los prompts de generación que la variable del contexto debe llamarse siempre \texttt{items}.
 
@@ -242,7 +242,7 @@ La segunda categoría agrupa los errores producidos por el propio LLM al generar
 
 WebBuilder incorpora un panel de métricas accesible únicamente para administradores que recopila datos en tiempo real sobre el funcionamiento del sistema. Esta sección presenta los resultados extraídos del panel tras el uso de la pagina, que permiten evaluar de forma objetiva tanto el rendimiento como la fiabilidad de la plataforma.
 
-El panel se estructura en seis vistas independientes (Resumen, Actividad, LLM, Alertas, Usuarios y Generaciones), cada una enfocada en un aspecto distinto del sistema. Tanto los datos numéricos como las capturas que se muestran a continuación corresponden a una instantánea del sistema en el momento de redactar esta memoria, por lo que pueden no coincidir exactamente con los valores actuales en el momento de la lectura.
+El panel se estructura en seis vistas independientes (Resumen, Actividad, LLM, Alertas, Usuarios y Generaciones), cada una enfocada en un aspecto distinto del sistema. Tanto los datos numéricos como las capturas que se muestran a continuación corresponden a una instantánea del sistema en el momento de redactar esta memoria.
 
 \subsection{Resumen general}
 \label{subsec:metricas-resumen}
@@ -257,16 +257,16 @@ den gran parte por el parsea realizado antes de entregar al LLM.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{img/webbuilder/experimentosvalidacion/resumen.png}
-    \caption{Panel de }
+    \caption{Panel de resumen}
     \label{fig:metricas-resumen}
 \end{figure}
 
 \subsection{Actividad y patrones de uso}
 \label{subsec:metricas-actividad}
 
-El panel de actividad muestra la evolución de los análisis y las generaciones en los últimos 30 días. Se observan picos de uso en los periodos de desarrollo de mejora de visualización, alcanzando hasta 15 análisis en un mismo.
+El panel de actividad muestra la evolución de los análisis y las generaciones en los últimos 30 días. Se observan picos de uso en los periodos de desarrollo de mejora de visualización.
 
-En cuanto a los formatos de entrada utilizados, el 95\% de los análisis se han realizado a partir de URLs de APIs públicas, siendo el 5\% restante análisis de ficheros locales.
+En cuanto a los formatos de entrada utilizados, el 100\% de los análisis son a partir de URLs de APIs públicas, en el momento de la captura no se habían realizado análisis de ficheros.
 
 La distribución de llamadas al LLM depende del tipo de ficheros: los pasos de generación de templates, modelos, carga de datos, vistas y plantilla base concentran 56 llamadas cada uno, mientras que los templates específicos de catálogo y detalle bajan a 26 y 23 respectivamente. 
 
@@ -282,7 +282,7 @@ Esto se debe a que estos últimos solo se generan cuando el tipo de sitio elegid
 \subsection{Rendimiento de los modelos LLM}
 \label{subsec:metricas-llm}
 
-El sistema acumula 456 llamadas totales al LLM, repartidas entre los cuatro modelos evaluados. La distribución refleja claramente las decisiones tomadas durante el desarrollo:
+El sistema acumula 456 llamadas totales al LLM, repartidas entre los cuatro modelos evaluados. Reparatiéndose de la siguiente manera entre los LLM:
 
 \begin{itemize}
 	\item \texttt{meta-llama/llama-4-scout-17b-16e-instruct}: 370 llamadas (81.1\%)
@@ -328,7 +328,7 @@ propagarse como errores definitivos.
 \subsection{Usuarios y proyectos generados}
 \label{subsec:metricas-usuarios}
 
-La plataforma cuenta con 4 usuarios registrados, todos ellos con al menos un sitio generado. La distribución de actividad muestra que el usuario \texttt{admin} concentra 52 análisis y 47 sitios generados (lo esperable dado que es la cuenta de pruebas principal), seguido por \texttt{Alejandro} con 9 análisis y 9 sitios, y los usuarios \texttt{Pruebasn8n} y \texttt{pruebas2} con volúmenes menores asociados a pruebas específicas.
+La plataforma cuenta con 4 usuarios registrados, todos ellos con al menos un sitio generado. La distribución de actividad muestra que el usuario \texttt{admin} concentra 52 análisis y 47 sitios generados (lo esperable dado que es la cuenta de pruebas principal), seguido por \texttt{Alejandro} con 9 análisis y 9 sitios, y otros usuarios con volúmenes menores asociados a pruebas específicas.
 
 \begin{figure}[H]
     \centering

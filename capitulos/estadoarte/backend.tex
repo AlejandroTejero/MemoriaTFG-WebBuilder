@@ -8,7 +8,7 @@ El backend esta construido con diferentes tecnologías de desarrollo web, en est
 \label{subsec:python}
 
 Python es un lenguaje de programación interpretado, de alto nivel y útil para diferentes tipos de tareas. Creado por Guido van Rossum a principios de los años 90~\cite{python_history}, Python ha evolucionado hasta convertirse en uno de los lenguajes más utilizados del mundo, con un 57,9\% de uso entre los desarrolladores en 2025~\cite{stackoverflow_survey_2025}, especialmente en el ámbito
-del desarrollo web, el análisis de datos y la inteligencia artificial. Siendo uno de los lenguajes de programación mas versátiles
+del desarrollo web, el análisis de datos y la inteligencia artificial. Siendo uno de los lenguajes de programación más versátiles
 
 La sintaxis clara permite escribir programas concisos para combinar lógica del servidor, procesamiento de APIs y generación dinámica de código. Python cuenta con un ecosistema de bibliotecas muy completo, distribuido a través de PyPI (\emph{Python Package Index}), del que WebBuilder hace uso directo: \texttt{requests} para la descarga de datos desde APIs externas, \texttt{xmltodict} y \texttt{defusedxml} para el parseo seguro de XML y \texttt{zipfile} para el empaquetado de los proyectos generados.
 
@@ -28,7 +28,7 @@ de serie todo lo necesario para construir aplicaciones web completas, desde el s
 de enrutado de URLs hasta el ORM (\emph{Object-Relational Mapper}, capa de software que permite trabajar con la base de datos usando objetos Python en lugar de escribir SQL), el motor de 
 plantillas, el sistema de autenticación y el panel de administración.
 
-Permite configurar todo lo necesario, Django incluye un sistema de gestión de base de datos SQLite integrado que permite definir las tablas y sus campos directamente en Python, sin necesidad de escribir SQL. Cada tabla de la base de datos se representa como una clase, y Django se encarga de traducir automáticamente las operaciones sobre esos objetos (consultas, inserciones, actualizaciones) a las instrucciones SQL correspondientes. Esto facilita el desarrollo inicial, y también la evolución del modelo a través de migraciones automáticas, que registran cada cambio de forma controlada, siendo capaz de saber que se cambio o modifico en cada momento, teniendo mas control sobre el desarrollo.
+Permite configurar todo lo necesario, Django incluye un sistema de gestión de base de datos SQLite integrado que permite definir las tablas y sus campos directamente en Python, sin necesidad de escribir SQL. Cada tabla de la base de datos se representa como una clase, y Django se encarga de traducir automáticamente las operaciones sobre esos objetos (consultas, inserciones, actualizaciones) a las instrucciones SQL correspondientes. Esto facilita el desarrollo inicial, y también la evolución del modelo a través de migraciones automáticas, que registran cada cambio de forma controlada, siendo capaz de saber que se cambio o modifico en cada momento, teniendo más control sobre el desarrollo.
 
 La lógica de vistas y de URLs permite organizar la lógica de forma clara y separada, con funciones clave que responden peticiones HTTP, separando el procesamiento de datos de la presentación. El motor de plantillas permite generar HTML dinámico con una sintaxis sencilla, con soporte para herencia de plantillas, lo que favorece la reutilización de componentes visuales.
 
