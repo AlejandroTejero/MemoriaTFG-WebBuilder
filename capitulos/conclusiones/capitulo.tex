@@ -18,7 +18,7 @@ En este capítulo se recogen las conclusiones obtenidas tras el desarrollo de We
 %  aspell --lang=es_ES -c memoria.tex
 %\end{verbatim}
 
-Cabe destacar que una de las principales limitaciones encontradas durante el desarrollo ha sido la calidad visual de los sitios generados. La calidad que producen modelos de pago de alto rendimiento como GPT-4 o Claude no es alcanzable con los modelos gratuitos disponibles en los proveedores utilizados, y por más refinamiento aplicado en los prompts y en el sistema de presets visuales, llegar a ese nivel de calidad resulta practicamente imposible sin acceso a modelos más potentes. Los objetivos marcados y conseguidos son los siguientes: 
+Cabe destacar que una de las principales limitaciones encontradas durante el desarrollo ha sido la calidad visual de los sitios generados. La calidad que producen modelos de pago de alto rendimiento como GPT-4 o Claude no es alcanzable con los modelos gratuitos disponibles en los proveedores utilizados, y por más refinamiento aplicado en los prompts y en el sistema de presets visuales, llegar a ese nivel de calidad resulta prácticamente imposible sin acceso a modelos más potentes. Los objetivos marcados y conseguidos son los siguientes: 
 
 \begin{itemize}
   \item \textbf{Desarrollar un módulo de ingestión de datos.} El módulo implementado en \\ \texttt{utils/ingest/} es capaz de validar la URL introducida por el usuario, descargar el contenido de la API de forma segura y detectar automáticamente el formato de los datos. Los cuatro formatos contemplados en el objetivo, JSON, XML, CSV y GeoJSON, están soportados y producen una estructura Python homogénea que el resto del sistema consume.
@@ -43,7 +43,7 @@ Durante el desarrollo de WebBuilder se han puesto en práctica numerosos conocim
 \begin{enumerate}
   \item \textbf{Programación de Sistemas de Telecomunicación:} Esta asignatura proporcionó la base de programación en Python que ha sido el lenguaje principal del proyecto. Los conocimientos adquiridos sobre estructuras de datos, funciones, módulos y manejo de ficheros han sido esenciales para desarrollar toda la lógica del backend, desde el módulo de ingestión hasta el generador de proyectos.
   
-  \item \textbf{Laboratorio de Bases de Datos:} Los conceptos de modelado relacional, consultas y gestión de datos aprendidos en esta asignatura han sido neccesarios para entender como diseñar los modelos de Django.
+  \item \textbf{Laboratorio de Bases de Datos:} Los conceptos de modelado relacional, consultas y gestión de datos aprendidos en esta asignatura han sido necesarios para entender como diseñar los modelos de Django.
   
   \item \textbf{Aplicaciones Telemáticas:} Esta asignatura introdujo el desarrollo web con HTML, CSS y JavaScript, tecnologías que conforman toda la capa de presentación de WebBuilder. Además, los conceptos de contenedores y entornos de ejecución aislados trabajados en esta asignatura sentaron las bases para comprender y aplicar Docker en el despliegue de los proyectos generados.
   
@@ -54,7 +54,7 @@ Durante el desarrollo de WebBuilder se han puesto en práctica numerosos conocim
   \item \textbf{Sistemas Operativos:} Aunque esta asignatura se centró en programación en C y conceptos de bajo nivel como procesos, kernel y gestión de recursos, esos fundamentos han facilitado la comprensión del funcionamiento interno de Docker: la gestión de contenedores, la asignación de puertos y el aislamiento de procesos en el sistema anfitrión.
 \end{enumerate}
 
-Este proyecto a ayudado integrar y aplicar de forma práctica los conocimientos adquiridos a lo largo del grado, demostrando que las competencias desarrolladas en cada asignatura no son independientes sino que se complementan y convergen en un proyecto real de ingeniería.
+Este proyecto ha ayudado integrar y aplicar de forma práctica los conocimientos adquiridos a lo largo del grado, demostrando que las competencias desarrolladas en cada asignatura no son independientes sino que se complementan y convergen en un proyecto real de ingeniería.
 
 \section{Lecciones aprendidas}
 \label{sec:lecciones_aprendidas}
@@ -90,6 +90,4 @@ Aunque WebBuilder cumple con los objetivos planteados, existen alguna lineas de 
   \item \textbf{Comparador de modelos LLM:} Permitir lanzar la misma generación con dos modelos distintos en paralelo y comparar los resultados sería una funcionalidad muy potente, tanto para el usuario final como para el análisis interno del sistema.
   
   \item \textbf{Galería pública de proyectos generados:} Implementar una sección donde los usuarios puedan marcar sus proyectos como públicos y compartirlos en una galería con el tipo de sitio, la API de origen y una captura visual. Convirtiendo asi WebBuilder en una herramienta social añadiendo interactividad y aumentando su potencial.
-  
-  \item \textbf{Sistema de autenticación con proveedores externos:} Incorporar la posibilidad de iniciar sesión con Google u otros proveedores mediante OAuth, simplificando el acceso a la plataforma y mejorando la experiencia de usuario.
 \end{enumerate}

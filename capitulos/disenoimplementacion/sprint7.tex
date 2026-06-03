@@ -104,3 +104,44 @@ El workflow de despliegue que se había construido en el Sprint 4 carecía de un
     \caption{Workflow deploy}
     \label{fig:Workflow deploy}
 \end{figure}
+
+
+\subsection{Autenticación OAuth con Google y GitHub}
+\label{subsec:oauth}
+
+Antes del cierre del proyecto, se integró la autenticación mediante OAuth con Google y GitHub, permitiendo al usuario iniciar sesión o registrarse en WebBuilder con una cuenta ya creada. La autenticación se realizó con la librería \texttt{django-allauth}, que gestiona el flujo OAuth completo y se integra con el sistema de autenticación de Django que ya existía.
+
+\subsubsection{Obtención de credenciales}
+Para habilitar el login con Google fue necesario acceder a \textbf{Google Cloud Console}, crear un proyecto OAuth, configurar la pantalla de consentimiento y generar un par de credenciales \texttt{client\_id} y \texttt{client\_secret}. En la configuración del cliente se declaró la URL de redirección autorizada, que debe coincidir exactamente con la que allauth espera recibir, es la dirección encargada de devolverte a WebBuilder:
+
+\begin{center}
+\texttt{http://\textless{}dominio\textgreater{}/accounts/google/login/callback/}
+\end{center}
+
+Para GitHub el proceso es similar, en este caso a través de \textbf{GitHub Developer Settings → OAuth Apps}, donde también se declara la \emph{Authorization callback URL}.
+
+Las credenciales obtenidas se añadieron al fichero \texttt{.env} del servidor como variables de entorno (\texttt{GOOGLE\_CLIENT\_ID}, \texttt{GOOGLE\_CLIENT\_SECRET}, \texttt{GITHUB\_CLIENT\_ID}, \\ \texttt{GITHUB\_CLIENT\_SECRET}) y se leen desde \texttt{settings.py}.
+
+
+\subsubsection{Arquitectura de la integración}
+La integración se compone de tres elementos principales:
+
+\begin{itemize}
+    \item \textbf{Adaptador OAuth} (\texttt{WebBuilder/adapters.py}): adaptador personalizado que sobreescribe el comportamiento por defecto de allauth en tres métodos. \texttt{save\_user()} se ejecuta únicamente la primera vez que un usuario accede con OAuth, es decir, en el momento del registro, y dispara el webhook de n8n correspondiente. \texttt{pre\_social\_login()} se ejecuta en cada acceso posterior y dispara el webhook de login con datos del acceso: IP, dispositivo y hora. Por último, \texttt{on\_authentication\_error()} captura cualquier error del flujo OAuth, lo registra en los logs y redirige al usuario a la página de login, evitando que allauth muestre su página de error por defecto sin estilos.
+
+    \item \textbf{Signal \texttt{post\_save}} (\texttt{WebBuilder/signals.py}): garantiza que se cree un \texttt{UserProfile} vacío para cualquier usuario nuevo, independientemente de si se registró mediante el formulario tradicional o mediante OAuth.
+
+    \item \textbf{Templates de allauth} (\texttt{WebBuilder/templates/socialaccount/}): allauth dispone de sus propias páginas HTML para los flujos de autenticación social; cuando no encuentra un template personalizado utiliza los suyos propios, que carecen de estilos. Se crearon templates propios para \texttt{login.html}, \texttt{signup.html} y \texttt{authentication\_error.html} respetando el sistema de estilos del proyecto.
+\end{itemize}
+
+
+\subsubsection{Problemas encontrados durante la puesta en producción}
+La integración resultó más compleja de lo esperado por la acumulación de varios problemas independientes que se manifestaban con el mismo síntoma: \emph{Third-Party Login Failure}. Resolverlos requirió un proceso de depuración iterativo.
+
+El primer problema fue que la \texttt{SECRET\_KEY} de Django no estaba definida en el \texttt{.env} de producción, por lo que el sistema generaba una clave aleatoria en cada arranque del contenedor. Esto invalidaba las sesiones activas, lo que rompía el flujo OAuth: allauth guarda el parámetro \texttt{state} en la sesión antes de redirigir al proveedor, y si el contenedor se reiniciaba entre la redirección y el callback, la sesión no podía verificarse. La solución fue generar una clave fija y añadirla al \texttt{.env}.
+
+El segundo problema fue que el framework \texttt{django.contrib.sites}, que allauth utiliza para construir las URLs de callback, tenía en base de datos el dominio por defecto \texttt{example.com} en lugar del dominio real del servidor. La solución fue editar el registro en el panel de administración de Django (\texttt{/admin/sites/site/}) con el dominio correcto.
+
+El tercer problema fue que las variables \texttt{ALLOWED\_HOSTS} y \texttt{CSRF\_TRUSTED\_ORIGINS} no estaban en el \texttt{.env} de producción pero sí en el local, lo que provocaba que Django rechazara las peticiones del proveedor OAuth. Se añadieron en producción con el dominio del servidor. 
+
+Una vez resueltos todos estos problemas de forma acumulativa, el flujo OAuth funciona de extremo a extremo: el usuario hace clic en \emph{Login con Google} o \emph{Login con GitHub}, es redirigido al proveedor, selecciona su cuenta y regresa a WebBuilder ya autenticado, con su perfil creado automáticamente y los webhooks de n8n notificados.
